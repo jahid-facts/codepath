@@ -1,0 +1,5 @@
+{
+  "navigation": { "ttfbMs": 1000, "domContentLoadedMs": 2500, "loadMs": 3500 },
+  "experience": { "lcpMs": 2500, "cls": 0.1 },
+  "resources": { "requests": 120, "transferBytes": 3000000 }
+}

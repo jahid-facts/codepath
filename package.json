@@ -1,0 +1,39 @@
+{
+  "name": "system_design",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "test": "node --test",
+    "test:e2e": "playwright test",
+    "test:e2e:mobile": "playwright test --project=mobile",
+    "test:a11y": "playwright test e2e/accessibility.spec.js",
+    "test:performance": "playwright test e2e/performance.spec.js",
+    "test:visual": "playwright test e2e/visual.spec.js --project=mobile",
+    "test:visual:update": "playwright test e2e/visual.spec.js --project=mobile --update-snapshots",
+    "serve:e2e": "next start --hostname 127.0.0.1 --port 3110",
+    "data:backup": "node scripts/backup-data.mjs",
+    "data:verify": "node scripts/verify-backup.mjs",
+    "data:restore": "node scripts/restore-backup.mjs",
+    "health:check": "node scripts/check-health.mjs",
+    "security:audit": "node scripts/security-audit.mjs",
+    "start": "next start",
+    "preview": "next start"
+  },
+  "dependencies": {
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  }
+}

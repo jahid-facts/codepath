@@ -1,0 +1,10 @@
+import { expect, test } from '@playwright/test'
+import budgets from '../performance-budgets.json' with { type: 'json' }
+
+const progress={version:1,language:'en',completed:[],bookmarks:[],recents:[],attempts:{},labProgress:{},notes:{},activityDates:[],analyticsOptOut:true,analyticsConsent:'denied',onboarding:{completed:true,retake:false,goal:'both',experience:'new',pace:'steady',diagnosticScore:0,recommendedTopic:'system-design'}}
+for(const[name,path]of[['dashboard','/'],['flagship lesson','/lessons/system-design'],['simulator','/simulator']])test(`${name} stays inside production performance budgets`,async({page})=>{
+  await page.addInitScript((value)=>{localStorage.setItem('system-design-path-v1',JSON.stringify(value));window.__systempathCls=0;try{new PerformanceObserver((list)=>{for(const entry of list.getEntries())if(!entry.hadRecentInput)window.__systempathCls+=entry.value}).observe({type:'layout-shift',buffered:true})}catch{}},progress)
+  await page.goto(path);await page.waitForLoadState('networkidle');await page.waitForTimeout(300)
+  const metrics=await page.evaluate(()=>{const navigation=performance.getEntriesByType('navigation')[0],resources=performance.getEntriesByType('resource');const lcp=performance.getEntriesByType('largest-contentful-paint').at(-1)?.startTime||0;return{ttfb:navigation.responseStart,domContentLoaded:navigation.domContentLoadedEventEnd,load:navigation.loadEventEnd,lcp,cls:window.__systempathCls||0,requests:resources.length,transferBytes:resources.reduce((sum,item)=>sum+(item.transferSize||0),0)}})
+  expect(metrics.ttfb).toBeLessThan(budgets.navigation.ttfbMs);expect(metrics.domContentLoaded).toBeLessThan(budgets.navigation.domContentLoadedMs);expect(metrics.load).toBeLessThan(budgets.navigation.loadMs);if(metrics.lcp)expect(metrics.lcp).toBeLessThan(budgets.experience.lcpMs);expect(metrics.cls).toBeLessThanOrEqual(budgets.experience.cls);expect(metrics.requests).toBeLessThan(budgets.resources.requests);expect(metrics.transferBytes).toBeLessThan(budgets.resources.transferBytes)
+})
