@@ -30,7 +30,7 @@ export function normalizeProgress(value) {
     language: value.language === 'bn' ? 'bn' : 'en',
     completed: Array.isArray(value.completed) ? [...new Set(value.completed.filter(validTopic))] : [],
     bookmarks: Array.isArray(value.bookmarks) ? [...new Set(value.bookmarks.filter(validTopic))] : [],
-    recents: Array.isArray(value.recents) ? value.recents.filter(validTopic).slice(0, 5) : [],
+    recents: Array.isArray(value.recents) ? [...new Set(value.recents.filter(validTopic))].slice(0, 5) : [],
     attempts: value.attempts && typeof value.attempts === 'object' ? Object.fromEntries(Object.entries(value.attempts).filter(([id, attempts]) => validTopic(id) && Array.isArray(attempts))) : {},
     labProgress: value.labProgress && typeof value.labProgress === 'object' ? value.labProgress : {},
     notes: value.notes && typeof value.notes === 'object' ? Object.fromEntries(Object.entries(value.notes).filter(([id, note]) => validTopic(id) && typeof note === 'string').map(([id, note]) => [id, note.slice(0, 2000)])) : {},

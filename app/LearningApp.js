@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { labs, modules, topics, ui } from './data'
+import { l, labs, modules, topics, ui } from './data'
 import { calculateSimulation, sameAnswers } from './logic'
 import { defaults, loadProgress, STORAGE_KEY, todayKey } from './progress'
 import Onboarding from './components/Onboarding'
@@ -12,6 +12,19 @@ import { learningStats } from './learning-stats'
 import ClientObservability from './components/ClientObservability'
 
 const t = (value, lang) => value?.[lang] ?? value?.en ?? value ?? ''
+
+// Primary docs-style sections shown in the top navigation bar.
+const SECTIONS = [
+  { id: 'curriculum', path: '/learn', icon: 'learn', label: { en: 'Learn', bn: 'শিখুন' }, match: ['curriculum', 'lesson', 'exam'] },
+  { id: 'cases', path: '/case-studies', icon: 'cases', label: { en: 'Case studies', bn: 'কেস স্টাডি' }, match: ['cases'] },
+  { id: 'tools', path: '/tools', icon: 'simulator', label: { en: 'Tools', bn: 'টুলস' }, match: ['tools', 'simulator', 'labs'] },
+  { id: 'interview', path: '/interview', icon: 'interview', label: { en: 'Interview', bn: 'ইন্টারভিউ' }, match: ['interview'] },
+  { id: 'cheatsheet', path: '/cheatsheet', icon: 'cheatsheet', label: { en: 'Cheatsheet', bn: 'চিটশিট' }, match: ['cheatsheet'] },
+  { id: 'glossary', path: '/glossary', icon: 'glossary', label: { en: 'Glossary', bn: 'শব্দকোষ' }, match: ['glossary'] },
+]
+
+// Views that render inside the docs layout with the collapsible category sidebar.
+const SIDEBAR_VIEWS = ['curriculum', 'lesson', 'exam']
 
 function viewFromLocation() {
   if (typeof window === 'undefined') return { name: 'dashboard' }
@@ -26,7 +39,8 @@ function viewFromLocation() {
   if (section === 'exams' && topics.some((topic) => topic.id === id)) return { name: 'exam', topicId: id }
   if (section === 'labs') return { name: 'labs', labId: labs.some((lab) => lab.id === id) ? id : undefined }
   if (section === 'learn') return { name: 'curriculum' }
-  if (['simulator', 'review'].includes(section)) return { name: section }
+  if (section === 'case-studies') return { name: 'cases' }
+  if (['tools', 'interview', 'cheatsheet', 'glossary', 'simulator', 'review'].includes(section)) return { name: section }
   return { name: 'dashboard' }
 }
 
@@ -36,11 +50,15 @@ function pathForView(name, data = {}) {
   if (name === 'lesson' && data.topicId) return `/lessons/${data.topicId}`
   if (name === 'exam' && data.topicId) return `/exams/${data.topicId}`
   if (name === 'labs') return data.labId ? `/labs/${data.labId}` : '/labs'
+  if (name === 'cases') return '/case-studies'
   return `/${name}`
 }
 
 function Icon({ name }) {
-  const icons = { dashboard: '⌂', learn: '▤', labs: '◇', simulator: '⌁', check: '✓', bookmark: '◆', clock: '◷', arrow: '→', back: '←', spark: '✦' }
+  const icons = {
+    dashboard: '⌂', learn: '▤', labs: '◇', simulator: '⌁', check: '✓', bookmark: '◆', clock: '◷', arrow: '→', back: '←', spark: '✦',
+    cases: '◱', interview: '◈', cheatsheet: '☰', glossary: '𝐀', home: '⌂', chevron: '⌄', book: '▤',
+  }
   return <span aria-hidden="true">{icons[name] || '•'}</span>
 }
 
@@ -97,61 +115,52 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
   const completedCount = progress.completed.length
   const needsOnboarding = ready && !progress.onboarding.completed && (progress.onboarding.retake || (completedCount === 0 && Object.values(progress.attempts).flat().length === 0))
 
+  const withSidebar = SIDEBAR_VIEWS.includes(view.name)
   return (
-    <div className="app-frame">
+    <div className={`app-frame docs-shell ${withSidebar ? 'has-sidebar' : 'full-width'}`}>
       <a className="skip-link" href="#main-content">{lang === 'bn' ? 'মূল বিষয়বস্তুতে যান' : 'Skip to main content'}</a>
       <div className="sr-only" role="status" aria-live="polite">{lang === 'bn' ? 'বর্তমান পৃষ্ঠা' : 'Current page'}: {view.name}</div>
       <VisitTracker disabled={!ready || progress.analyticsOptOut || progress.analyticsConsent !== 'granted'} />
       <ClientObservability enabled={ready && progress.analyticsConsent === 'granted' && !progress.analyticsOptOut} />
       <ReadingProgress active={view.name === 'lesson'} />
-      <aside className="sidebar">
-        <button className="brand" onClick={() => navigate('dashboard')} aria-label={text(ui.dashboard)}>
-          <span className="brand-mark">S</span>
-          <span><strong>System<span>Path</span></strong><small>{lang === 'bn' ? 'সহজে ডিজাইন শিখুন' : 'Design systems clearly'}</small></span>
-        </button>
-        <nav aria-label="Primary navigation">
-          <NavButton active={view.name === 'dashboard'} icon="dashboard" label={text(ui.dashboard)} onClick={() => navigate('dashboard')} />
-          <NavButton active={view.name === 'curriculum' || view.name === 'lesson' || view.name === 'exam'} icon="learn" label={text(ui.learn)} onClick={() => navigate('curriculum')} badge={`${completedCount}/${topics.length}`} />
-          <NavButton active={view.name === 'labs'} icon="labs" label={text(ui.labs)} onClick={() => navigate('labs')} />
-          <NavButton active={view.name === 'simulator'} icon="simulator" label={text(ui.simulator)} onClick={() => navigate('simulator')} />
-          <NavButton active={view.name === 'review'} icon="spark" label={lang === 'bn' ? 'রিভিউ' : 'Review'} onClick={() => navigate('review')} />
-        </nav>
-        <div className="sidebar-progress">
-          <div className="progress-ring" style={{ '--progress': `${Math.round(completedCount / topics.length * 100)}deg` }}><strong>{Math.round(completedCount / topics.length * 100)}%</strong></div>
-          <div><strong>{lang === 'bn' ? 'আপনার অগ্রগতি' : 'Your progress'}</strong><small>{completedCount} {lang === 'bn' ? 'টি টপিক সম্পন্ন' : 'topics complete'}</small></div>
+
+      <TopNav
+        view={view}
+        lang={lang}
+        completedCount={completedCount}
+        navigate={navigate}
+        onSearch={() => setSearchOpen(true)}
+        onProfile={() => setProfileOpen(true)}
+        onToggleLang={() => update({ language: lang === 'en' ? 'bn' : 'en' })}
+      />
+
+      <div className="docs-body">
+        {withSidebar && <DocsSidebar view={view} progress={progress} lang={lang} openTopic={openTopic} navigate={navigate} completedCount={completedCount} />}
+        <div className="main-column">
+          <main className="content" id="main-content" tabIndex="-1">
+            {view.name === 'dashboard' && <Dashboard progress={progress} lang={lang} openTopic={openTopic} navigate={navigate} />}
+            {view.name === 'curriculum' && <Curriculum progress={progress} lang={lang} openTopic={openTopic} />}
+            {view.name === 'lesson' && <Lesson topicId={view.topicId} progress={progress} setProgress={setProgress} lang={lang} openTopic={openTopic} navigate={navigate} />}
+            {view.name === 'exam' && <Exam topicId={view.topicId} progress={progress} setProgress={setProgress} lang={lang} navigate={navigate} openTopic={openTopic} />}
+            {view.name === 'labs' && <Labs progress={progress} setProgress={setProgress} lang={lang} initialLabId={view.labId} navigate={navigate} />}
+            {view.name === 'simulator' && <Simulator progress={progress} setProgress={setProgress} lang={lang} />}
+            {view.name === 'review' && <ReviewCenter progress={progress} lang={lang} openTopic={openTopic} navigate={navigate} />}
+            {view.name === 'tools' && <Tools progress={progress} lang={lang} navigate={navigate} />}
+            {view.name === 'cases' && <CaseStudies progress={progress} lang={lang} openTopic={openTopic} />}
+            {view.name === 'interview' && <Interview progress={progress} lang={lang} openTopic={openTopic} navigate={navigate} />}
+            {view.name === 'cheatsheet' && <Cheatsheet progress={progress} lang={lang} openTopic={openTopic} />}
+            {view.name === 'glossary' && <Glossary lang={lang} openTopic={openTopic} />}
+          </main>
         </div>
-        <div className="sidebar-note"><Icon name="spark" /><p>{lang === 'bn' ? 'ছোট ধাপে শিখুন। প্রতিটি সিদ্ধান্তের কারণ বলুন।' : 'Learn in small steps. Explain why behind every decision.'}</p></div>
-      </aside>
-
-      <div className="main-column">
-        <header className="topbar">
-          <button className="mobile-brand" onClick={() => navigate('dashboard')}><span className="brand-mark">S</span><strong>SystemPath</strong></button>
-          <div className="topbar-spacer" />
-          <button className="search-trigger" onClick={() => setSearchOpen(true)}><span>⌕</span><b>{lang === 'bn' ? 'পাঠ খুঁজুন' : 'Search lessons'}</b><kbd>⌘ K</kbd></button>
-          <button className="language-toggle" onClick={() => update({ language: lang === 'en' ? 'bn' : 'en' })} aria-label="Switch language">
-            <span className={lang === 'bn' ? 'active' : ''}>বাং</span><span className={lang === 'en' ? 'active' : ''}>EN</span>
-          </button>
-          <button className="avatar" onClick={() => setProfileOpen(true)} aria-label="Local learner profile">LP</button>
-        </header>
-
-        <main className="content" id="main-content" tabIndex="-1">
-          {view.name === 'dashboard' && <Dashboard progress={progress} lang={lang} openTopic={openTopic} navigate={navigate} />}
-          {view.name === 'curriculum' && <Curriculum progress={progress} lang={lang} openTopic={openTopic} />}
-          {view.name === 'lesson' && <Lesson topicId={view.topicId} progress={progress} setProgress={setProgress} lang={lang} openTopic={openTopic} navigate={navigate} />}
-          {view.name === 'exam' && <Exam topicId={view.topicId} progress={progress} setProgress={setProgress} lang={lang} navigate={navigate} openTopic={openTopic} />}
-          {view.name === 'labs' && <Labs progress={progress} setProgress={setProgress} lang={lang} initialLabId={view.labId} navigate={navigate} />}
-          {view.name === 'simulator' && <Simulator progress={progress} setProgress={setProgress} lang={lang} />}
-          {view.name === 'review' && <ReviewCenter progress={progress} lang={lang} openTopic={openTopic} navigate={navigate} />}
-        </main>
-
-        <nav className="mobile-nav" aria-label="Mobile navigation">
-          <NavButton active={view.name === 'dashboard'} icon="dashboard" label={text(ui.dashboard)} onClick={() => navigate('dashboard')} />
-          <NavButton active={['curriculum', 'lesson', 'exam'].includes(view.name)} icon="learn" label={text(ui.learn)} onClick={() => navigate('curriculum')} />
-          <NavButton active={view.name === 'labs'} icon="labs" label={text(ui.labs)} onClick={() => navigate('labs')} />
-          <NavButton active={view.name === 'simulator'} icon="simulator" label={text(ui.simulator)} onClick={() => navigate('simulator')} />
-          <NavButton active={view.name === 'review'} icon="spark" label={lang === 'bn' ? 'রিভিউ' : 'Review'} onClick={() => navigate('review')} />
-        </nav>
       </div>
+
+      <nav className="mobile-nav" aria-label="Mobile navigation">
+        <NavButton active={view.name === 'dashboard'} icon="home" label={lang === 'bn' ? 'হোম' : 'Home'} onClick={() => navigate('dashboard')} />
+        <NavButton active={['curriculum', 'lesson', 'exam'].includes(view.name)} icon="learn" label={text(ui.learn)} onClick={() => navigate('curriculum')} />
+        <NavButton active={view.name === 'cases'} icon="cases" label={lang === 'bn' ? 'কেস' : 'Cases'} onClick={() => navigate('cases')} />
+        <NavButton active={['tools', 'simulator', 'labs'].includes(view.name)} icon="simulator" label={lang === 'bn' ? 'টুলস' : 'Tools'} onClick={() => navigate('tools')} />
+        <NavButton active={view.name === 'interview'} icon="interview" label={lang === 'bn' ? 'ইন্টারভিউ' : 'Interview'} onClick={() => navigate('interview')} />
+      </nav>
       {searchOpen && <SearchPalette lang={lang} progress={progress} onClose={() => setSearchOpen(false)} openTopic={(id) => { setSearchOpen(false); openTopic(id) }} />}
       {profileOpen && <ProfilePanel progress={progress} setProgress={setProgress} lang={lang} onClose={() => setProfileOpen(false)} />}
       {needsOnboarding && <Onboarding lang={lang} onFinish={(onboarding, startTopic) => { setProgress((current) => ({ ...current, onboarding: { ...onboarding, completed: true, retake: false } })); if (startTopic) openTopic(onboarding.recommendedTopic) }} />}
@@ -164,6 +173,90 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
 
 function NavButton({ active, icon, label, onClick, badge }) {
   return <button className={`nav-button ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onClick}><Icon name={icon} /><span>{label}</span>{badge && <small>{badge}</small>}</button>
+}
+
+function TopNav({ view, lang, navigate, onSearch, onProfile, onToggleLang }) {
+  const text = (v) => t(v, lang)
+  return (
+    <header className="top-nav">
+      <button className="brand" onClick={() => navigate('dashboard')} aria-label={lang === 'bn' ? 'হোম' : 'Home'}>
+        <span className="brand-mark">S</span>
+        <span className="brand-text"><strong>System<span>Path</span></strong><small>{lang === 'bn' ? 'সিস্টেম ডিজাইন' : 'System design'}</small></span>
+      </button>
+      <nav className="top-nav-links" aria-label="Primary navigation">
+        {SECTIONS.map((section) => {
+          const active = section.match.includes(view.name)
+          return (
+            <button key={section.id} className={`top-nav-link ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => navigate(section.id)}>
+              <Icon name={section.icon} /><span>{text(section.label)}</span>
+            </button>
+          )
+        })}
+      </nav>
+      <div className="top-nav-actions">
+        <button className="search-trigger" onClick={onSearch} aria-label={lang === 'bn' ? 'পাঠ খুঁজুন' : 'Search lessons'}><span>⌕</span><b>{lang === 'bn' ? 'খুঁজুন' : 'Search'}</b><kbd>⌘K</kbd></button>
+        <button className="language-toggle" onClick={onToggleLang} aria-label="Switch language">
+          <span className={lang === 'bn' ? 'active' : ''}>বাং</span><span className={lang === 'en' ? 'active' : ''}>EN</span>
+        </button>
+        <button className="avatar" onClick={onProfile} aria-label="Local learner profile">LP</button>
+      </div>
+    </header>
+  )
+}
+
+function DocsSidebar({ view, progress, lang, openTopic, navigate, completedCount }) {
+  const text = (v) => t(v, lang)
+  const activeTopicId = view.topicId
+  const activeModuleId = topics.find((topic) => topic.id === activeTopicId)?.moduleId
+  const [open, setOpen] = useState(() => Object.fromEntries(modules.map((module) => [module.id, activeModuleId ? module.id === activeModuleId : true])))
+  useEffect(() => { if (activeModuleId) setOpen((prev) => ({ ...prev, [activeModuleId]: true })) }, [activeModuleId])
+  const pct = Math.round(completedCount / topics.length * 100)
+  return (
+    <aside className="docs-sidebar" aria-label={lang === 'bn' ? 'পাঠ্যক্রম' : 'Curriculum'}>
+      <div className="docs-sidebar-inner">
+        <button className={`docs-overview ${view.name === 'curriculum' ? 'active' : ''}`} onClick={() => navigate('curriculum')}>
+          <Icon name="book" /><span>{lang === 'bn' ? 'সম্পূর্ণ পাঠ্যক্রম' : 'Full curriculum'}</span><small>{completedCount}/{topics.length}</small>
+        </button>
+        <div className="docs-tree">
+          {modules.map((module) => {
+            const list = topics.filter((topic) => topic.moduleId === module.id)
+            const done = list.filter((topic) => progress.completed.includes(topic.id)).length
+            const isOpen = open[module.id]
+            return (
+              <section className={`docs-group ${isOpen ? 'open' : ''}`} key={module.id} style={{ '--module-color': module.color }}>
+                <button className="docs-group-head" aria-expanded={isOpen} onClick={() => setOpen((prev) => ({ ...prev, [module.id]: !prev[module.id] }))}>
+                  <span className="docs-group-num">{module.number}</span>
+                  <span className="docs-group-title">{text(module.title)}</span>
+                  <span className="docs-group-count">{done}/{list.length}</span>
+                  <span className="docs-chevron"><Icon name="chevron" /></span>
+                </button>
+                {isOpen && (
+                  <ul className="docs-links">
+                    {list.map((topic) => {
+                      const complete = progress.completed.includes(topic.id)
+                      const active = topic.id === activeTopicId
+                      return (
+                        <li key={topic.id}>
+                          <button className={`docs-link ${active ? 'active' : ''} ${complete ? 'complete' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => openTopic(topic.id)}>
+                            <span className="docs-link-dot">{complete ? <Icon name="check" /> : String(topic.order).padStart(2, '0')}</span>
+                            <span className="docs-link-title">{text(topic.title)}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </section>
+            )
+          })}
+        </div>
+        <div className="docs-sidebar-progress">
+          <div className="progress-ring" style={{ '--progress': `${pct}deg` }}><strong>{pct}%</strong></div>
+          <div><strong>{lang === 'bn' ? 'আপনার অগ্রগতি' : 'Your progress'}</strong><small>{completedCount} {lang === 'bn' ? 'টি সম্পন্ন' : 'complete'}</small></div>
+        </div>
+      </div>
+    </aside>
+  )
 }
 
 function DialogFocusManager({ selector }) {
@@ -613,4 +706,138 @@ function NumberControl({ label, value, min, max, onChange }) {
 
 function Metric({ label, value, unit, danger }) {
   return <div className={`metric-card ${danger ? 'danger' : ''}`}><small>{label}</small><strong>{value}</strong><span>{unit}</span></div>
+}
+
+function Tools({ lang, navigate }) {
+  const text = (v) => t(v, lang)
+  const tools = [
+    { key: 'simulator', icon: '⌁', tone: 'tool-violet', title: l('Architecture simulator', 'আর্কিটেকচার সিমুলেটর'), desc: l('Tune traffic, caching, and replicas and watch bottlenecks appear in real time.', 'ট্রাফিক, ক্যাশ ও রেপ্লিকা বদলে সরাসরি বটলনেক দেখুন।'), meta: l('Interactive', 'ইন্টারঅ্যাক্টিভ') },
+    { key: 'labs', icon: '◇', tone: 'tool-mint', title: l('Guided design labs', 'গাইডেড ডিজাইন ল্যাব'), desc: l('Make one decision at a time through real systems, then compare with an expert path.', 'বাস্তব সিস্টেমে ধাপে ধাপে সিদ্ধান্ত নিন ও বিশেষজ্ঞ পথের সঙ্গে মিলান।'), meta: l(`${labs.length} labs`, `${labs.length}টি ল্যাব`) },
+    { key: 'review', icon: '✦', tone: 'tool-amber', title: l('Review & mastery', 'রিভিউ ও মাস্টারি'), desc: l('Flashcards, a daily challenge, and a smart queue that targets your weak spots.', 'ফ্ল্যাশকার্ড, দৈনিক চ্যালেঞ্জ ও দুর্বল জায়গা লক্ষ্য করা স্মার্ট কিউ।'), meta: l('Personalized', 'ব্যক্তিগত') },
+  ]
+  return <>
+    <PageIntro eyebrow={lang === 'bn' ? 'হাতে-কলমে অনুশীলন' : 'Practice hands-on'} title={lang === 'bn' ? 'টুলস' : 'Tools'} description={lang === 'bn' ? 'পড়ার পাশাপাশি এই ইন্টারঅ্যাক্টিভ টুল দিয়ে ডিজাইন অনুশীলন করুন।' : 'Go beyond reading—practice designing with these interactive tools.'} />
+    <div className="tool-grid">
+      {tools.map((tool) => (
+        <button className={`tool-card ${tool.tone}`} key={tool.key} onClick={() => navigate(tool.key)}>
+          <span className="tool-icon">{tool.icon}</span>
+          <span className="tool-badge">{text(tool.meta)}</span>
+          <strong>{text(tool.title)}</strong>
+          <p>{text(tool.desc)}</p>
+          <b>{lang === 'bn' ? 'চালু করুন' : 'Open'} <Icon name="arrow" /></b>
+        </button>
+      ))}
+    </div>
+  </>
+}
+
+function CaseStudies({ progress, lang, openTopic }) {
+  const text = (v) => t(v, lang)
+  const cases = topics.filter((topic) => topic.difficulty === 'Case study')
+  return <>
+    <PageIntro eyebrow={lang === 'bn' ? `${cases.length}টি বাস্তব সিস্টেম` : `${cases.length} real systems`} title={lang === 'bn' ? 'কেস স্টাডি' : 'Case studies'} description={lang === 'bn' ? 'ইন্টারভিউ-উপযোগী আর্কিটেকচার—প্রতিটি স্কেল, API, ডেটা ও ব্যর্থতার দৃষ্টিকোণে ব্যাখ্যা করা।' : 'Interview-ready architectures, each explained through scale, APIs, data, and failure modes.'} />
+    <div className="case-grid">
+      {cases.map((topic) => {
+        const module = modules.find((item) => item.id === topic.moduleId)
+        const complete = progress.completed.includes(topic.id)
+        return (
+          <button className={`case-card ${complete ? 'complete' : ''}`} key={topic.id} style={{ '--module-color': module.color }} onClick={() => openTopic(topic.id)}>
+            <header><span className="case-tag">{text(module.title)}</span>{complete && <b><Icon name="check" /></b>}</header>
+            <strong>{text(topic.title)}</strong>
+            <p>{text(topic.insight)}</p>
+            <footer><span><Icon name="clock" /> {topic.minutes} min</span><span className="case-open">{lang === 'bn' ? 'কেস খুলুন' : 'Open case'} <Icon name="arrow" /></span></footer>
+          </button>
+        )
+      })}
+    </div>
+  </>
+}
+
+function Interview({ lang, openTopic, navigate }) {
+  const text = (v) => t(v, lang)
+  const framework = lang === 'bn'
+    ? ['রিকোয়ারমেন্ট', 'স্কেল হিসাব', 'API ও ডেটা', 'আর্কিটেকচার', 'ব্যর্থতা', 'ট্রেড-অফ']
+    : ['Requirements', 'Scale math', 'API & data', 'Architecture', 'Failure modes', 'Trade-offs']
+  return <>
+    <PageIntro eyebrow={lang === 'bn' ? 'ইন্টারভিউয়ের জন্য প্রস্তুতি' : 'Prepare for the room'} title={lang === 'bn' ? 'ইন্টারভিউ প্রস্তুতি' : 'Interview prep'} description={lang === 'bn' ? 'প্রতিটি টপিকের জন্য: কীভাবে উত্তর সাজাবেন, কোন ভুল এড়াবেন এবং নিজেকে যাচাই করতে দ্রুত পরীক্ষা।' : 'For each topic: how to frame the answer, the trap to avoid, and a quick exam to test yourself.'} />
+    <section className="interview-framework">
+      <div><span className="eyebrow">{lang === 'bn' ? 'প্রতিটি প্রশ্নে একই কাঠামো' : 'One structure for every prompt'}</span><h2>{lang === 'bn' ? '৬ ধাপের উত্তর কাঠামো' : 'The six-step answer framework'}</h2></div>
+      <ol>{framework.map((step, i) => <li key={i}><b>{String(i + 1).padStart(2, '0')}</b>{step}</li>)}</ol>
+    </section>
+    <div className="interview-modules">
+      {modules.map((module) => {
+        const list = topics.filter((topic) => topic.moduleId === module.id)
+        return (
+          <section className="interview-module" key={module.id} style={{ '--module-color': module.color }}>
+            <header><span className="module-number">{module.number}</span><h2>{text(module.title)}</h2></header>
+            <div className="interview-cards">
+              {list.map((topic) => (
+                <article className="interview-item" key={topic.id}>
+                  <h3>{text(topic.title)}</h3>
+                  <div className="interview-note"><small>{lang === 'bn' ? 'যেভাবে উত্তর দেবেন' : 'How to answer'}</small><p>{text(topic.interview)}</p></div>
+                  <div className="interview-trap"><small>{lang === 'bn' ? 'যে ভুল এড়াবেন' : 'Trap to avoid'}</small><p>{text(topic.mistake)}</p></div>
+                  <div className="interview-actions">
+                    <button onClick={() => openTopic(topic.id)}>{lang === 'bn' ? 'পাঠ' : 'Lesson'}</button>
+                    <button className="primary" onClick={() => navigate('exam', { topicId: topic.id })}>{lang === 'bn' ? 'পরীক্ষা' : 'Exam'} <Icon name="arrow" /></button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )
+      })}
+    </div>
+  </>
+}
+
+function Cheatsheet({ lang, openTopic }) {
+  const text = (v) => t(v, lang)
+  return <>
+    <PageIntro eyebrow={lang === 'bn' ? 'দ্রুত রিভিশন' : 'Rapid revision'} title={lang === 'bn' ? 'চিটশিট' : 'Cheatsheet'} description={lang === 'bn' ? 'প্রতিটি ধারণা সংক্ষেপে: সংজ্ঞা, মূল নীতি, ট্রেড-অফ ও সাধারণ ভুল।' : 'Every idea in brief: the definition, the design principle, the trade-off, and the common mistake.'} />
+    <div className="cheatsheet-stack">
+      {modules.map((module) => {
+        const list = topics.filter((topic) => topic.moduleId === module.id)
+        return (
+          <section className="cheat-module" key={module.id} style={{ '--module-color': module.color }}>
+            <header><span className="module-number">{module.number}</span><h2>{text(module.title)}</h2></header>
+            <div className="cheat-rows">
+              {list.map((topic) => (
+                <button className="cheat-row" key={topic.id} onClick={() => openTopic(topic.id)}>
+                  <strong>{text(topic.title)}</strong>
+                  <p className="cheat-def">{text(topic.insight)}</p>
+                  <span className="cheat-tag cheat-principle"><b>{lang === 'bn' ? 'নীতি' : 'Principle'}</b> {text(topic.action)}</span>
+                  <span className="cheat-tag cheat-cost"><b>{lang === 'bn' ? 'খরচ' : 'Cost'}</b> {text(topic.tradeoff)}</span>
+                  <span className="cheat-tag cheat-avoid"><b>{lang === 'bn' ? 'এড়ান' : 'Avoid'}</b> {text(topic.mistake)}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )
+      })}
+    </div>
+  </>
+}
+
+function Glossary({ lang, openTopic }) {
+  const text = (v) => t(v, lang)
+  const [query, setQuery] = useState('')
+  const entries = useMemo(() => topics
+    .map((topic) => ({ id: topic.id, term: text(topic.title), def: text(topic.insight) }))
+    .sort((a, b) => a.term.localeCompare(b.term, lang === 'bn' ? 'bn' : 'en')), [lang])
+  const normalized = query.trim().toLowerCase()
+  const filtered = entries.filter((entry) => !normalized || entry.term.toLowerCase().includes(normalized) || entry.def.toLowerCase().includes(normalized))
+  return <>
+    <PageIntro eyebrow={lang === 'bn' ? `${entries.length}টি ধারণা` : `${entries.length} concepts`} title={lang === 'bn' ? 'শব্দকোষ' : 'Glossary'} description={lang === 'bn' ? 'সিস্টেম ডিজাইনের মূল শব্দ ও ধারণা—এক জায়গায়, খুঁজে নিন।' : 'Every core system-design term and concept in one searchable place.'} />
+    <div className="glossary-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={lang === 'bn' ? 'ধারণা খুঁজুন…' : 'Search a concept…'} aria-label={lang === 'bn' ? 'শব্দকোষ খুঁজুন' : 'Search glossary'} /></div>
+    <div className="glossary-list">
+      {filtered.map((entry) => (
+        <button className="glossary-entry" key={entry.id} onClick={() => openTopic(entry.id)}>
+          <strong>{entry.term}</strong>
+          <p>{entry.def}</p>
+          <span className="glossary-open">{lang === 'bn' ? 'পড়ুন' : 'Read'} <Icon name="arrow" /></span>
+        </button>
+      ))}
+      {!filtered.length && <div className="glossary-empty">{lang === 'bn' ? 'কিছু পাওয়া যায়নি।' : 'Nothing found.'}</div>}
+    </div>
+  </>
 }

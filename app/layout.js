@@ -26,7 +26,10 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      {/* Browser extensions (Grammarly, WOT, etc.) inject attributes onto <body>
+          before React hydrates, causing a benign hydration warning. This ignores
+          attribute diffs on <body> only — real mismatches inside the app still warn. */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   )
 }
