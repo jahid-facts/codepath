@@ -1,27 +1,34 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { l, labs, modules, topics, ui } from './data'
+import { l, ui } from './data'
+import { siteName } from './site'
+import { courses, availableCourses, allTopics, allLabs, getCourse, courseForTopic, courseForLab, DEFAULT_COURSE_ID } from './course-registry'
+import { CourseContext, useCourse } from './course-context'
+import SiteFooter from './components/SiteFooter'
 import { calculateSimulation, sameAnswers } from './logic'
 import { defaults, loadProgress, STORAGE_KEY, todayKey } from './progress'
 import Onboarding from './components/Onboarding'
 import AnalyticsConsent from './components/AnalyticsConsent'
-import ArchitectureDiagram from './components/ArchitectureDiagram'
+import CourseDiagram from './components/CourseDiagram'
 import ProfilePanel from './components/ProfilePanel'
 import { learningStats } from './learning-stats'
 import ClientObservability from './components/ClientObservability'
 
 const t = (value, lang) => value?.[lang] ?? value?.en ?? value ?? ''
 
-// Primary docs-style sections shown in the top navigation bar.
+// Primary docs-style sections shown in the top navigation bar. `requires` hides a
+// section for courses that have no content for it (e.g. DSA has no case studies).
 const SECTIONS = [
   { id: 'curriculum', path: '/learn', icon: 'learn', label: { en: 'Learn', bn: 'শিখুন' }, match: ['curriculum', 'lesson', 'exam'] },
-  { id: 'cases', path: '/case-studies', icon: 'cases', label: { en: 'Case studies', bn: 'কেস স্টাডি' }, match: ['cases'] },
+  { id: 'cases', path: '/case-studies', icon: 'cases', label: { en: 'Case studies', bn: 'কেস স্টাডি' }, match: ['cases'], requires: (course) => course.topics?.some((topic) => topic.difficulty === 'Case study') },
   { id: 'tools', path: '/tools', icon: 'simulator', label: { en: 'Tools', bn: 'টুলস' }, match: ['tools', 'simulator', 'labs'] },
   { id: 'interview', path: '/interview', icon: 'interview', label: { en: 'Interview', bn: 'ইন্টারভিউ' }, match: ['interview'] },
   { id: 'cheatsheet', path: '/cheatsheet', icon: 'cheatsheet', label: { en: 'Cheatsheet', bn: 'চিটশিট' }, match: ['cheatsheet'] },
   { id: 'glossary', path: '/glossary', icon: 'glossary', label: { en: 'Glossary', bn: 'শব্দকোষ' }, match: ['glossary'] },
 ]
+
+const sectionsForCourse = (course) => SECTIONS.filter((section) => !section.requires || section.requires(course))
 
 // Views that render inside the docs layout with the collapsible category sidebar.
 const SIDEBAR_VIEWS = ['curriculum', 'lesson', 'exam']
@@ -30,15 +37,16 @@ function viewFromLocation() {
   if (typeof window === 'undefined') return { name: 'dashboard' }
   const legacy = window.location.hash.replace(/^#\/?/, '').split('/')
   if (legacy[0]) {
-    if (legacy[0] === 'lesson' && topics.some((topic) => topic.id === legacy[1])) return { name: 'lesson', topicId: legacy[1] }
-    if (legacy[0] === 'exam' && topics.some((topic) => topic.id === legacy[1])) return { name: 'exam', topicId: legacy[1] }
+    if (legacy[0] === 'lesson' && allTopics.some((topic) => topic.id === legacy[1])) return { name: 'lesson', topicId: legacy[1] }
+    if (legacy[0] === 'exam' && allTopics.some((topic) => topic.id === legacy[1])) return { name: 'exam', topicId: legacy[1] }
     if (['curriculum', 'labs', 'simulator', 'review'].includes(legacy[0])) return { name: legacy[0] }
   }
   const [, section, id] = window.location.pathname.split('/')
-  if (section === 'lessons' && topics.some((topic) => topic.id === id)) return { name: 'lesson', topicId: id }
-  if (section === 'exams' && topics.some((topic) => topic.id === id)) return { name: 'exam', topicId: id }
-  if (section === 'labs') return { name: 'labs', labId: labs.some((lab) => lab.id === id) ? id : undefined }
+  if (section === 'lessons' && allTopics.some((topic) => topic.id === id)) return { name: 'lesson', topicId: id }
+  if (section === 'exams' && allTopics.some((topic) => topic.id === id)) return { name: 'exam', topicId: id }
+  if (section === 'labs') return { name: 'labs', labId: allLabs.some((lab) => lab.id === id) ? id : undefined }
   if (section === 'learn') return { name: 'curriculum' }
+  if (section === 'courses') return { name: 'catalog' }
   if (section === 'case-studies') return { name: 'cases' }
   if (['tools', 'interview', 'cheatsheet', 'glossary', 'simulator', 'review'].includes(section)) return { name: section }
   return { name: 'dashboard' }
@@ -47,6 +55,7 @@ function viewFromLocation() {
 function pathForView(name, data = {}) {
   if (name === 'dashboard') return '/'
   if (name === 'curriculum') return '/learn'
+  if (name === 'catalog') return '/courses'
   if (name === 'lesson' && data.topicId) return `/lessons/${data.topicId}`
   if (name === 'exam' && data.topicId) return `/exams/${data.topicId}`
   if (name === 'labs') return data.labId ? `/labs/${data.labId}` : '/labs'
@@ -112,11 +121,26 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
     navigate('lesson', { topicId })
   }
   const update = (patch) => setProgress((p) => ({ ...p, ...patch }))
-  const completedCount = progress.completed.length
-  const needsOnboarding = ready && !progress.onboarding.completed && (progress.onboarding.retake || (completedCount === 0 && Object.values(progress.attempts).flat().length === 0))
+
+  // Resolve the active course: the topic/lab in view wins, else the last chosen course.
+  const activeCourseId = useMemo(() => {
+    if (view.topicId) return courseForTopic(view.topicId)?.id || progress.activeCourse || DEFAULT_COURSE_ID
+    if (view.name === 'labs' && view.labId) return courseForLab(view.labId)?.id || progress.activeCourse || DEFAULT_COURSE_ID
+    return progress.activeCourse || DEFAULT_COURSE_ID
+  }, [view, progress.activeCourse])
+  const course = getCourse(activeCourseId) || getCourse(DEFAULT_COURSE_ID)
+  const switchCourse = (courseId, target = 'dashboard') => {
+    setProgress((p) => ({ ...p, activeCourse: courseId }))
+    navigate(target)
+  }
+  const courseValue = { course, courses, availableCourses, activeCourseId, switchCourse, topics: course.topics, modules: course.modules, labs: course.labs }
+
+  const completedCount = course.topics.filter((topic) => progress.completed.includes(topic.id)).length
+  const needsOnboarding = ready && activeCourseId === DEFAULT_COURSE_ID && !progress.onboarding.completed && (progress.onboarding.retake || (progress.completed.length === 0 && Object.values(progress.attempts).flat().length === 0))
 
   const withSidebar = SIDEBAR_VIEWS.includes(view.name)
   return (
+    <CourseContext.Provider value={courseValue}>
     <div className={`app-frame docs-shell ${withSidebar ? 'has-sidebar' : 'full-width'}`}>
       <a className="skip-link" href="#main-content">{lang === 'bn' ? 'মূল বিষয়বস্তুতে যান' : 'Skip to main content'}</a>
       <div className="sr-only" role="status" aria-live="polite">{lang === 'bn' ? 'বর্তমান পৃষ্ঠা' : 'Current page'}: {view.name}</div>
@@ -127,6 +151,9 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
       <TopNav
         view={view}
         lang={lang}
+        course={course}
+        courses={courses}
+        switchCourse={switchCourse}
         completedCount={completedCount}
         navigate={navigate}
         onSearch={() => setSearchOpen(true)}
@@ -138,6 +165,7 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
         {withSidebar && <DocsSidebar view={view} progress={progress} lang={lang} openTopic={openTopic} navigate={navigate} completedCount={completedCount} />}
         <div className="main-column">
           <main className="content" id="main-content" tabIndex="-1">
+            {view.name === 'catalog' && <Catalog progress={progress} lang={lang} switchCourse={switchCourse} activeCourseId={activeCourseId} />}
             {view.name === 'dashboard' && <Dashboard progress={progress} lang={lang} openTopic={openTopic} navigate={navigate} />}
             {view.name === 'curriculum' && <Curriculum progress={progress} lang={lang} openTopic={openTopic} />}
             {view.name === 'lesson' && <Lesson topicId={view.topicId} progress={progress} setProgress={setProgress} lang={lang} openTopic={openTopic} navigate={navigate} />}
@@ -151,13 +179,16 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
             {view.name === 'cheatsheet' && <Cheatsheet progress={progress} lang={lang} openTopic={openTopic} />}
             {view.name === 'glossary' && <Glossary lang={lang} openTopic={openTopic} />}
           </main>
+          <SiteFooter lang={lang} navigate={navigate} />
         </div>
       </div>
 
       <nav className="mobile-nav" aria-label="Mobile navigation">
         <NavButton active={view.name === 'dashboard'} icon="home" label={lang === 'bn' ? 'হোম' : 'Home'} onClick={() => navigate('dashboard')} />
         <NavButton active={['curriculum', 'lesson', 'exam'].includes(view.name)} icon="learn" label={text(ui.learn)} onClick={() => navigate('curriculum')} />
-        <NavButton active={view.name === 'cases'} icon="cases" label={lang === 'bn' ? 'কেস' : 'Cases'} onClick={() => navigate('cases')} />
+        {course.topics.some((topic) => topic.difficulty === 'Case study')
+          ? <NavButton active={view.name === 'cases'} icon="cases" label={lang === 'bn' ? 'কেস' : 'Cases'} onClick={() => navigate('cases')} />
+          : <NavButton active={view.name === 'catalog'} icon="book" label={lang === 'bn' ? 'কোর্স' : 'Courses'} onClick={() => navigate('catalog')} />}
         <NavButton active={['tools', 'simulator', 'labs'].includes(view.name)} icon="simulator" label={lang === 'bn' ? 'টুলস' : 'Tools'} onClick={() => navigate('tools')} />
         <NavButton active={view.name === 'interview'} icon="interview" label={lang === 'bn' ? 'ইন্টারভিউ' : 'Interview'} onClick={() => navigate('interview')} />
       </nav>
@@ -168,6 +199,7 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
       {ready && progress.analyticsConsent === 'unset' && !needsOnboarding && <AnalyticsConsent lang={lang} onAccept={() => setProgress((current) => ({ ...current, analyticsConsent: 'granted', analyticsOptOut: false }))} onDecline={() => setProgress((current) => ({ ...current, analyticsConsent: 'denied', analyticsOptOut: true }))} />}
       <FocusTimer lang={lang} />
     </div>
+    </CourseContext.Provider>
   )
 }
 
@@ -175,16 +207,14 @@ function NavButton({ active, icon, label, onClick, badge }) {
   return <button className={`nav-button ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onClick}><Icon name={icon} /><span>{label}</span>{badge && <small>{badge}</small>}</button>
 }
 
-function TopNav({ view, lang, navigate, onSearch, onProfile, onToggleLang }) {
+function TopNav({ view, lang, course, courses, switchCourse, navigate, onSearch, onProfile, onToggleLang }) {
   const text = (v) => t(v, lang)
   return (
     <header className="top-nav">
-      <button className="brand" onClick={() => navigate('dashboard')} aria-label={lang === 'bn' ? 'হোম' : 'Home'}>
-        <span className="brand-mark">S</span>
-        <span className="brand-text"><strong>System<span>Path</span></strong><small>{lang === 'bn' ? 'সিস্টেম ডিজাইন' : 'System design'}</small></span>
-      </button>
+      <button className="app-wordmark" onClick={() => navigate('dashboard')} aria-label={siteName}>{siteName}</button>
+      <CourseSwitcher course={course} courses={courses} lang={lang} switchCourse={switchCourse} navigate={navigate} />
       <nav className="top-nav-links" aria-label="Primary navigation">
-        {SECTIONS.map((section) => {
+        {sectionsForCourse(course).map((section) => {
           const active = section.match.includes(view.name)
           return (
             <button key={section.id} className={`top-nav-link ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => navigate(section.id)}>
@@ -204,7 +234,47 @@ function TopNav({ view, lang, navigate, onSearch, onProfile, onToggleLang }) {
   )
 }
 
+function CourseSwitcher({ course, courses, lang, switchCourse, navigate }) {
+  const [open, setOpen] = useState(false)
+  const text = (v) => t(v, lang)
+  useEffect(() => {
+    if (!open) return
+    const close = (event) => { if (!event.target.closest('.course-switcher')) setOpen(false) }
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [open])
+  return (
+    <div className="course-switcher">
+      <button className="course-switcher-trigger" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((value) => !value)}>
+        <span className="brand-mark" style={{ background: `linear-gradient(145deg, ${course.color}, ${course.color})` }}>{course.mark}</span>
+        <span className="brand-text"><strong>{text(course.tagline)}</strong><small>{lang === 'bn' ? 'কোর্স বদলান' : 'Switch course'}</small></span>
+        <span className="course-switcher-chevron" aria-hidden="true">⌄</span>
+      </button>
+      {open && (
+        <div className="course-menu" role="menu">
+          <p className="course-menu-label">{lang === 'bn' ? 'কোর্স' : 'Courses'}</p>
+          {courses.map((item) => (
+            <button
+              key={item.id}
+              role="menuitem"
+              disabled={!item.available}
+              className={`course-menu-item ${item.id === course.id ? 'active' : ''} ${item.available ? '' : 'soon'}`}
+              onClick={() => { if (item.available) { setOpen(false); switchCourse(item.id) } }}
+            >
+              <span className="course-menu-mark" style={{ background: item.accent, color: item.color }}>{item.mark}</span>
+              <span className="course-menu-copy"><strong>{text(item.title)}</strong><small>{item.available ? text(item.tagline) : (lang === 'bn' ? 'শীঘ্রই আসছে' : 'Coming soon')}</small></span>
+              {item.id === course.id && item.available && <b aria-hidden="true">✓</b>}
+            </button>
+          ))}
+          <button className="course-menu-all" role="menuitem" onClick={() => { setOpen(false); navigate('catalog') }}>{lang === 'bn' ? 'সব কোর্স দেখুন' : 'Browse all courses'} <Icon name="arrow" /></button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DocsSidebar({ view, progress, lang, openTopic, navigate, completedCount }) {
+  const { topics, modules } = useCourse()
   const text = (v) => t(v, lang)
   const activeTopicId = view.topicId
   const activeModuleId = topics.find((topic) => topic.id === activeTopicId)?.moduleId
@@ -345,29 +415,34 @@ function FocusTimer({ lang }) {
 }
 
 function Dashboard({ progress, lang, openTopic, navigate }) {
+  const { course, topics, modules } = useCourse()
   const text = (v) => t(v, lang)
   const next = topics.find((topic) => !progress.completed.includes(topic.id)) || topics[0]
+  const done = topics.filter((topic) => progress.completed.includes(topic.id)).length
   const scores = Object.values(progress.attempts).flat().map((a) => Math.round(a.score / a.total * 100))
   const average = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
   const recentTopics = progress.recents.map((id) => topics.find((item) => item.id === id)).filter(Boolean)
+  const orbit = course.id === 'dsa' ? ['Array', 'Tree', 'Graph', 'Hash'] : ['API', 'DB', 'CDN', 'Queue']
 
   return <>
-    <section className="hero-dashboard">
+    <section className="hero-dashboard" style={{ '--module-color': course.color }}>
       <div className="hero-copy">
-        <span className="eyebrow">{progress.completed.length ? (lang === 'bn' ? 'শেখা আবার শুরু করুন' : 'Continue your journey') : (lang === 'bn' ? 'আপনার আর্কিটেকচার যাত্রা শুরু করুন' : 'Start your architecture journey')}</span>
-        <h1>{lang === 'bn' ? <>আর্কিটেকচার ভাবুন,<br /><em>আত্মবিশ্বাসে ডিজাইন করুন।</em></> : <>Think in architecture.<br /><em>Design with confidence.</em></>}</h1>
-        <p>{lang === 'bn' ? 'ভিজ্যুয়াল ব্যাখ্যা, ইন্টারঅ্যাক্টিভ ডায়াগ্রাম ও বাস্তব ডিজাইন চ্যালেঞ্জে জটিল সিস্টেম সহজ করুন।' : 'Make complex systems feel simple with visual explanations, interactive diagrams, and real design challenges.'}</p>
-        <div className="hero-buttons"><button className="primary-button" onClick={() => openTopic(next.id)}>{progress.completed.length ? (lang === 'bn' ? 'শেখা চালিয়ে যান' : 'Continue learning') : (lang === 'bn' ? 'প্রথম পাঠ শুরু করুন' : 'Start first lesson')} <Icon name="arrow" /></button><button className="surprise-button" onClick={() => openTopic(topics[Math.floor(Math.random() * topics.length)].id)}>✦ {lang === 'bn' ? 'আমাকে চমকে দিন' : 'Surprise me'}</button></div>
+        <span className="eyebrow">{done ? (lang === 'bn' ? 'শেখা আবার শুরু করুন' : 'Continue your journey') : (lang === 'bn' ? 'আপনার শেখার যাত্রা শুরু করুন' : 'Start your learning journey')}</span>
+        {course.id === 'system-design'
+          ? <h1>{lang === 'bn' ? <>আর্কিটেকচার ভাবুন,<br /><em>আত্মবিশ্বাসে ডিজাইন করুন।</em></> : <>Think in architecture.<br /><em>Design with confidence.</em></>}</h1>
+          : <h1>{text(course.title)}</h1>}
+        <p>{course.id === 'system-design' ? (lang === 'bn' ? 'ভিজ্যুয়াল ব্যাখ্যা, ইন্টারঅ্যাক্টিভ ডায়াগ্রাম ও বাস্তব ডিজাইন চ্যালেঞ্জে জটিল সিস্টেম সহজ করুন।' : 'Make complex systems feel simple with visual explanations, interactive diagrams, and real design challenges.') : text(course.summary)}</p>
+        <div className="hero-buttons"><button className="primary-button" onClick={() => openTopic(next.id)}>{done ? (lang === 'bn' ? 'শেখা চালিয়ে যান' : 'Continue learning') : (lang === 'bn' ? 'প্রথম পাঠ শুরু করুন' : 'Start first lesson')} <Icon name="arrow" /></button><button className="surprise-button" onClick={() => openTopic(topics[Math.floor(Math.random() * topics.length)].id)}>✦ {lang === 'bn' ? 'আমাকে চমকে দিন' : 'Surprise me'}</button></div>
       </div>
       <div className="hero-visual" aria-hidden="true">
-        <div className="orbit orbit-one"><span>API</span><span>DB</span></div>
-        <div className="orbit orbit-two"><span>CDN</span><span>Queue</span></div>
-        <div className="hero-core"><strong>{progress.completed.length}</strong><small>/ {topics.length}</small><span>{lang === 'bn' ? 'সম্পন্ন' : 'complete'}</span></div>
+        <div className="orbit orbit-one"><span>{orbit[0]}</span><span>{orbit[1]}</span></div>
+        <div className="orbit orbit-two"><span>{orbit[2]}</span><span>{orbit[3]}</span></div>
+        <div className="hero-core"><strong>{done}</strong><small>/ {topics.length}</small><span>{lang === 'bn' ? 'সম্পন্ন' : 'complete'}</span></div>
       </div>
     </section>
 
     <section className="stats-grid" aria-label="Learning statistics">
-      <Stat icon="learn" value={`${progress.completed.length}/${topics.length}`} label={lang === 'bn' ? 'টপিক সম্পন্ন' : 'Topics completed'} tone="violet" />
+      <Stat icon="learn" value={`${done}/${topics.length}`} label={lang === 'bn' ? 'টপিক সম্পন্ন' : 'Topics completed'} tone="violet" />
       <Stat icon="check" value={`${average}%`} label={lang === 'bn' ? 'গড় পরীক্ষার স্কোর' : 'Average exam score'} tone="mint" />
       <Stat icon="bookmark" value={progress.bookmarks.length} label={lang === 'bn' ? 'বুকমার্ক' : 'Saved lessons'} tone="amber" />
       <Stat icon="labs" value={Object.keys(progress.labProgress || {}).length} label={lang === 'bn' ? 'ল্যাব শুরু' : 'Labs explored'} tone="blue" />
@@ -407,9 +482,10 @@ function Stat({ icon, value, label, tone }) {
 }
 
 function Curriculum({ progress, lang, openTopic }) {
+  const { course, topics, modules } = useCourse()
   const text = (v) => t(v, lang)
   return <>
-    <PageIntro eyebrow={lang === 'bn' ? `${topics.length}টি সম্পূর্ণ পাঠ` : `${topics.length} complete lessons`} title={lang === 'bn' ? 'শেখার পথ' : 'Learning path'} description={lang === 'bn' ? 'ভিত্তি থেকে বাস্তব ডিজাইন—নিজের গতিতে যেকোনো পাঠ খুলুন।' : 'From first principles to practical systems—open any lesson and learn at your pace.'} />
+    <PageIntro eyebrow={lang === 'bn' ? `${topics.length}টি সম্পূর্ণ পাঠ` : `${topics.length} complete lessons`} title={text(course.title)} description={text(course.summary)} />
     <div className="curriculum-stack">
       {modules.map((module) => {
         const list = topics.filter((topic) => topic.moduleId === module.id)
@@ -437,6 +513,7 @@ function bestScore(attempts) {
 }
 
 function Lesson({ topicId, progress, setProgress, lang, openTopic, navigate }) {
+  const { course, topics, modules } = useCourse()
   const topic = topics.find((item) => item.id === topicId) || topics[0]
   const module = modules.find((item) => item.id === topic.moduleId)
   const text = (v) => t(v, lang)
@@ -458,8 +535,9 @@ function Lesson({ topicId, progress, setProgress, lang, openTopic, navigate }) {
         <LessonSection number="01" label={lang === 'bn' ? 'শেখার লক্ষ্য' : 'Learning objectives'}><ul className="check-list">{topic.objectives.map((item, i) => <li key={i}><Icon name="check" /> {text(item)}</li>)}</ul></LessonSection>
         <LessonSection number="02" label={lang === 'bn' ? 'সহজভাবে ভাবুন' : 'Start with an analogy'}><div className="analogy-card"><span>💡</span><p>{text(topic.analogy)}</p></div></LessonSection>
         <LessonSection number="03" label={lang === 'bn' ? 'মূল ধারণা' : 'Core idea'}><p className="lead-paragraph">{text(topic.insight)}</p><div className="principle-card"><strong>{lang === 'bn' ? 'মূল নীতি' : 'Design principle'}</strong><p>{text(topic.action)}</p></div></LessonSection>
-        <LessonSection number="04" label={lang === 'bn' ? 'ভিজ্যুয়াল ফ্লো' : 'Visual request flow'}><ArchitectureDiagram kind={topic.diagram} lang={lang} title={topic.title} /></LessonSection>
-        <LessonSection number="05" label={lang === 'bn' ? 'অনুরোধের পথ' : 'Walk through the flow'}><ol className="flow-steps"><li><b>1</b><span>{lang === 'bn' ? 'ক্লায়েন্ট একটি স্পষ্ট কনট্র্যাক্ট অনুযায়ী অনুরোধ পাঠায়।' : 'The client sends a request through a defined contract.'}</span></li><li><b>2</b><span>{text(topic.action)}</span></li><li><b>3</b><span>{lang === 'bn' ? 'সিস্টেম ফল দেয় এবং লেটেন্সি, এরর ও ক্ষমতা পরিমাপ করে।' : 'The system returns a result and measures latency, errors, and capacity.'}</span></li></ol></LessonSection>
+        <LessonSection number="04" label={course.id === 'system-design' ? (lang === 'bn' ? 'ভিজ্যুয়াল ফ্লো' : 'Visual request flow') : (lang === 'bn' ? 'ভিজ্যুয়াল ব্যাখ্যা' : 'Visual walkthrough')}><CourseDiagram kind={topic.diagram} courseId={course.id} lang={lang} title={topic.title} /></LessonSection>
+        <LessonSection number="05" label={course.id === 'system-design' ? (lang === 'bn' ? 'অনুরোধের পথ' : 'Walk through the flow') : (lang === 'bn' ? 'ধাপে ধাপে' : 'Step by step')}><ol className="flow-steps"><li><b>1</b><span>{text(topic.insight)}</span></li><li><b>2</b><span>{text(topic.action)}</span></li><li><b>3</b><span>{course.id === 'system-design' ? (lang === 'bn' ? 'সিস্টেম ফল দেয় এবং লেটেন্সি, এরর ও ক্ষমতা পরিমাপ করে।' : 'The system returns a result and measures latency, errors, and capacity.') : (lang === 'bn' ? 'খরচ ও ট্রেড-অফ যাচাই করে সেরা বিকল্পটি বাছুন।' : 'Weigh the cost and trade-off, then choose the best alternative.')}</span></li></ol></LessonSection>
+        {topic.complexity?.length > 0 && <LessonSection number="•" label={lang === 'bn' ? 'জটিলতা' : 'Complexity'}><ComplexityTable rows={topic.complexity} lang={lang} /></LessonSection>}
         {topic.deepDive && <FlagshipDeepDive key={topic.id} content={topic.deepDive} lang={lang} />}
         <LessonSection number="06" label={lang === 'bn' ? 'ট্রেড-অফ' : 'Trade-offs'}><div className="pros-cons"><div><strong>＋ {lang === 'bn' ? 'কেন কার্যকর' : 'Why it helps'}</strong><p>{text(topic.advantages)}</p></div><div><strong>△ {lang === 'bn' ? 'মূল মূল্য' : 'The cost'}</strong><p>{text(topic.tradeoff)}</p></div></div></LessonSection>
         <DecisionCheckpoint key={topic.id} topic={topic} lang={lang} />
@@ -477,6 +555,10 @@ function Lesson({ topicId, progress, setProgress, lang, openTopic, navigate }) {
 
 function LessonSection({ number, label, children }) {
   return <section className="lesson-section"><header><span>{number}</span><h2>{label}</h2></header>{children}</section>
+}
+
+function ComplexityTable({ rows, lang }) {
+  return <div className="complexity-table"><div className="complexity-head"><span>{lang === 'bn' ? 'অপারেশন' : 'Operation'}</span><span>{lang === 'bn' ? 'জটিলতা' : 'Complexity'}</span></div>{rows.map((row, index) => <div className="complexity-row" key={index}><span>{t(row.op, lang)}</span><code>{row.value}</code></div>)}</div>
 }
 
 function FlagshipDeepDive({ content, lang }) {
@@ -519,6 +601,7 @@ function Confetti() {
 }
 
 function Exam({ topicId, progress, setProgress, lang, navigate, openTopic }) {
+  const { topics } = useCourse()
   const topic = topics.find((item) => item.id === topicId) || topics[0]
   const [answers, setAnswers] = useState({})
   const [submitted, setSubmitted] = useState(false)
@@ -577,6 +660,7 @@ function Question({ question, index, answers, choose, lang, submitted = false })
 }
 
 function ReviewCenter({ progress, lang, openTopic, navigate }) {
+  const { topics, labs } = useCourse()
   const [cardIndex, setCardIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const stats = learningStats(progress)
@@ -628,6 +712,7 @@ function ReviewCenter({ progress, lang, openTopic, navigate }) {
 }
 
 function SearchPalette({ lang, progress, onClose, openTopic }) {
+  const { topics, modules } = useCourse()
   const [query, setQuery] = useState('')
   const normalized = query.trim().toLowerCase()
   const results = topics.filter((topic) => !normalized || [topic.title.en, topic.title.bn, topic.insight.en, topic.insight.bn].some((value) => value.toLowerCase().includes(normalized))).slice(0, 8)
@@ -636,6 +721,7 @@ function SearchPalette({ lang, progress, onClose, openTopic }) {
 
 
 function Labs({ progress, setProgress, lang, initialLabId, navigate }) {
+  const { labs } = useCourse()
   const [active, setActive] = useState(initialLabId || null)
   const [answers, setAnswers] = useState({})
   useEffect(() => {
@@ -687,7 +773,7 @@ function Simulator({ progress, setProgress, lang }) {
       </section>
       <section className="simulation-output">
         <div className={`health-banner ${calculations.overloaded ? 'danger' : 'healthy'}`}><span>{calculations.overloaded ? '!' : '✓'}</span><div><strong>{calculations.overloaded ? (lang === 'bn' ? 'ক্ষমতার ঝুঁকি আছে' : 'Capacity at risk') : (lang === 'bn' ? 'সিস্টেম সুস্থ' : 'System looks healthy')}</strong><p>{calculations.overloaded ? (lang === 'bn' ? 'লাল মেট্রিকের ক্ষমতা বাড়ান বা লোড কমান।' : 'Increase capacity or reduce the load behind red metrics.') : (lang === 'bn' ? 'বর্তমান শিক্ষামূলক সীমার মধ্যে যথেষ্ট হেডরুম আছে।' : 'There is useful headroom under these educational limits.')}</p></div></div>
-        <ArchitectureDiagram kind="cache" lang={lang} title={{ en: 'Simulated cache-aside system', bn: 'সিমুলেটেড ক্যাশ-অ্যাসাইড সিস্টেম' }} />
+        <CourseDiagram kind="cache" courseId="system-design" lang={lang} title={{ en: 'Simulated cache-aside system', bn: 'সিমুলেটেড ক্যাশ-অ্যাসাইড সিস্টেম' }} />
         <div className="metric-grid"><Metric label={lang === 'bn' ? 'প্রতি অ্যাপ লোড' : 'Load / app'} value={calculations.appPerNode} unit="RPS" danger={calculations.appPerNode > 700} /><Metric label={lang === 'bn' ? 'ডেটাবেস লোড' : 'Database load'} value={calculations.dbLoad} unit="ops/s" danger={calculations.utilization > 80} /><Metric label={lang === 'bn' ? 'আনুমানিক লেটেন্সি' : 'Est. latency'} value={calculations.latency} unit="ms" danger={calculations.latency > 120} /><Metric label={lang === 'bn' ? 'ব্যান্ডউইডথ' : 'Bandwidth'} value={calculations.bandwidth} unit="MB/s" /></div>
         <div className="recommendation"><span>✦</span><div><strong>{lang === 'bn' ? 'পরবর্তী সিদ্ধান্ত' : 'Recommended next decision'}</strong><p>{calculations.utilization > 80 ? (lang === 'bn' ? 'ডেটাবেস স্যাচুরেট হচ্ছে—ক্যাশ হিট রেট, DB ক্ষমতা বা রেপ্লিকা বাড়ান।' : 'The database is saturating—increase cache hit rate, DB capacity, or replicas.') : calculations.appPerNode > 700 ? (lang === 'bn' ? 'অ্যাপ স্তরে আরও রেপ্লিকা যোগ করুন।' : 'Add more replicas at the application tier.') : values.failure ? (lang === 'bn' ? 'ফেইলওভারের পর অবশিষ্ট রেপ্লিকার হেডরুম যাচাই করুন।' : 'Verify remaining replica headroom after failover.') : (lang === 'bn' ? 'এখন ব্যর্থতা চালু করে রেজিলিয়েন্স পরীক্ষা করুন।' : 'Now enable a failure and test the resilience margin.')}</p></div></div>
       </section>
@@ -709,12 +795,13 @@ function Metric({ label, value, unit, danger }) {
 }
 
 function Tools({ lang, navigate }) {
+  const { course, labs } = useCourse()
   const text = (v) => t(v, lang)
   const tools = [
-    { key: 'simulator', icon: '⌁', tone: 'tool-violet', title: l('Architecture simulator', 'আর্কিটেকচার সিমুলেটর'), desc: l('Tune traffic, caching, and replicas and watch bottlenecks appear in real time.', 'ট্রাফিক, ক্যাশ ও রেপ্লিকা বদলে সরাসরি বটলনেক দেখুন।'), meta: l('Interactive', 'ইন্টারঅ্যাক্টিভ') },
-    { key: 'labs', icon: '◇', tone: 'tool-mint', title: l('Guided design labs', 'গাইডেড ডিজাইন ল্যাব'), desc: l('Make one decision at a time through real systems, then compare with an expert path.', 'বাস্তব সিস্টেমে ধাপে ধাপে সিদ্ধান্ত নিন ও বিশেষজ্ঞ পথের সঙ্গে মিলান।'), meta: l(`${labs.length} labs`, `${labs.length}টি ল্যাব`) },
+    course.id === 'system-design' && { key: 'simulator', icon: '⌁', tone: 'tool-violet', title: l('Architecture simulator', 'আর্কিটেকচার সিমুলেটর'), desc: l('Tune traffic, caching, and replicas and watch bottlenecks appear in real time.', 'ট্রাফিক, ক্যাশ ও রেপ্লিকা বদলে সরাসরি বটলনেক দেখুন।'), meta: l('Interactive', 'ইন্টারঅ্যাক্টিভ') },
+    labs.length > 0 && { key: 'labs', icon: '◇', tone: 'tool-mint', title: l('Guided design labs', 'গাইডেড ডিজাইন ল্যাব'), desc: l('Make one decision at a time, then compare with an expert path.', 'ধাপে ধাপে সিদ্ধান্ত নিন ও বিশেষজ্ঞ পথের সঙ্গে মিলান।'), meta: l(`${labs.length} labs`, `${labs.length}টি ল্যাব`) },
     { key: 'review', icon: '✦', tone: 'tool-amber', title: l('Review & mastery', 'রিভিউ ও মাস্টারি'), desc: l('Flashcards, a daily challenge, and a smart queue that targets your weak spots.', 'ফ্ল্যাশকার্ড, দৈনিক চ্যালেঞ্জ ও দুর্বল জায়গা লক্ষ্য করা স্মার্ট কিউ।'), meta: l('Personalized', 'ব্যক্তিগত') },
-  ]
+  ].filter(Boolean)
   return <>
     <PageIntro eyebrow={lang === 'bn' ? 'হাতে-কলমে অনুশীলন' : 'Practice hands-on'} title={lang === 'bn' ? 'টুলস' : 'Tools'} description={lang === 'bn' ? 'পড়ার পাশাপাশি এই ইন্টারঅ্যাক্টিভ টুল দিয়ে ডিজাইন অনুশীলন করুন।' : 'Go beyond reading—practice designing with these interactive tools.'} />
     <div className="tool-grid">
@@ -732,6 +819,7 @@ function Tools({ lang, navigate }) {
 }
 
 function CaseStudies({ progress, lang, openTopic }) {
+  const { topics, modules } = useCourse()
   const text = (v) => t(v, lang)
   const cases = topics.filter((topic) => topic.difficulty === 'Case study')
   return <>
@@ -754,10 +842,15 @@ function CaseStudies({ progress, lang, openTopic }) {
 }
 
 function Interview({ lang, openTopic, navigate }) {
+  const { course, topics, modules } = useCourse()
   const text = (v) => t(v, lang)
-  const framework = lang === 'bn'
-    ? ['রিকোয়ারমেন্ট', 'স্কেল হিসাব', 'API ও ডেটা', 'আর্কিটেকচার', 'ব্যর্থতা', 'ট্রেড-অফ']
-    : ['Requirements', 'Scale math', 'API & data', 'Architecture', 'Failure modes', 'Trade-offs']
+  const framework = course.id === 'dsa'
+    ? (lang === 'bn'
+      ? ['প্রশ্ন স্পষ্ট করুন', 'উদাহরণ ও এজ কেস', 'ব্রুট ফোর্স', 'সঠিক স্ট্রাকচারে অপটিমাইজ', 'জটিলতা বিশ্লেষণ', 'কোড ও টেস্ট']
+      : ['Clarify the problem', 'Examples & edge cases', 'Brute force first', 'Optimize with the right structure', 'Analyze complexity', 'Code & test'])
+    : (lang === 'bn'
+      ? ['রিকোয়ারমেন্ট', 'স্কেল হিসাব', 'API ও ডেটা', 'আর্কিটেকচার', 'ব্যর্থতা', 'ট্রেড-অফ']
+      : ['Requirements', 'Scale math', 'API & data', 'Architecture', 'Failure modes', 'Trade-offs'])
   return <>
     <PageIntro eyebrow={lang === 'bn' ? 'ইন্টারভিউয়ের জন্য প্রস্তুতি' : 'Prepare for the room'} title={lang === 'bn' ? 'ইন্টারভিউ প্রস্তুতি' : 'Interview prep'} description={lang === 'bn' ? 'প্রতিটি টপিকের জন্য: কীভাবে উত্তর সাজাবেন, কোন ভুল এড়াবেন এবং নিজেকে যাচাই করতে দ্রুত পরীক্ষা।' : 'For each topic: how to frame the answer, the trap to avoid, and a quick exam to test yourself.'} />
     <section className="interview-framework">
@@ -791,6 +884,7 @@ function Interview({ lang, openTopic, navigate }) {
 }
 
 function Cheatsheet({ lang, openTopic }) {
+  const { topics, modules } = useCourse()
   const text = (v) => t(v, lang)
   return <>
     <PageIntro eyebrow={lang === 'bn' ? 'দ্রুত রিভিশন' : 'Rapid revision'} title={lang === 'bn' ? 'চিটশিট' : 'Cheatsheet'} description={lang === 'bn' ? 'প্রতিটি ধারণা সংক্ষেপে: সংজ্ঞা, মূল নীতি, ট্রেড-অফ ও সাধারণ ভুল।' : 'Every idea in brief: the definition, the design principle, the trade-off, and the common mistake.'} />
@@ -819,15 +913,16 @@ function Cheatsheet({ lang, openTopic }) {
 }
 
 function Glossary({ lang, openTopic }) {
+  const { topics } = useCourse()
   const text = (v) => t(v, lang)
   const [query, setQuery] = useState('')
   const entries = useMemo(() => topics
     .map((topic) => ({ id: topic.id, term: text(topic.title), def: text(topic.insight) }))
-    .sort((a, b) => a.term.localeCompare(b.term, lang === 'bn' ? 'bn' : 'en')), [lang])
+    .sort((a, b) => a.term.localeCompare(b.term, lang === 'bn' ? 'bn' : 'en')), [lang, topics])
   const normalized = query.trim().toLowerCase()
   const filtered = entries.filter((entry) => !normalized || entry.term.toLowerCase().includes(normalized) || entry.def.toLowerCase().includes(normalized))
   return <>
-    <PageIntro eyebrow={lang === 'bn' ? `${entries.length}টি ধারণা` : `${entries.length} concepts`} title={lang === 'bn' ? 'শব্দকোষ' : 'Glossary'} description={lang === 'bn' ? 'সিস্টেম ডিজাইনের মূল শব্দ ও ধারণা—এক জায়গায়, খুঁজে নিন।' : 'Every core system-design term and concept in one searchable place.'} />
+    <PageIntro eyebrow={lang === 'bn' ? `${entries.length}টি ধারণা` : `${entries.length} concepts`} title={lang === 'bn' ? 'শব্দকোষ' : 'Glossary'} description={lang === 'bn' ? 'এই কোর্সের মূল শব্দ ও ধারণা—এক জায়গায়, খুঁজে নিন।' : 'Every core term and concept from this course in one searchable place.'} />
     <div className="glossary-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={lang === 'bn' ? 'ধারণা খুঁজুন…' : 'Search a concept…'} aria-label={lang === 'bn' ? 'শব্দকোষ খুঁজুন' : 'Search glossary'} /></div>
     <div className="glossary-list">
       {filtered.map((entry) => (
@@ -838,6 +933,41 @@ function Glossary({ lang, openTopic }) {
         </button>
       ))}
       {!filtered.length && <div className="glossary-empty">{lang === 'bn' ? 'কিছু পাওয়া যায়নি।' : 'Nothing found.'}</div>}
+    </div>
+  </>
+}
+
+function Catalog({ progress, lang, switchCourse, activeCourseId }) {
+  const text = (v) => t(v, lang)
+  return <>
+    <PageIntro eyebrow={lang === 'bn' ? 'শেখার প্ল্যাটফর্ম' : 'Learning platform'} title={lang === 'bn' ? 'কোর্স ক্যাটালগ' : 'Course catalog'} description={lang === 'bn' ? 'একটি কোর্স বেছে নিয়ে শেখা শুরু করুন। নতুন কোর্স নিয়মিত যোগ হচ্ছে।' : 'Pick a course and start learning. New courses are added regularly.'} />
+    <div className="catalog-grid">
+      {courses.map((item) => {
+        const done = item.topics ? item.topics.filter((topic) => progress.completed.includes(topic.id)).length : 0
+        const total = item.topics?.length || 0
+        const isActive = item.available && item.id === activeCourseId
+        return (
+          <button
+            key={item.id}
+            className={`catalog-card ${item.available ? '' : 'soon'} ${isActive ? 'active' : ''}`}
+            style={{ '--module-color': item.color, '--course-accent': item.accent }}
+            disabled={!item.available}
+            onClick={() => item.available && switchCourse(item.id)}
+          >
+            <header>
+              <span className="catalog-mark">{item.mark}</span>
+              {item.available ? (total ? <b className="catalog-progress">{done}/{total}</b> : null) : <b className="catalog-soon">{lang === 'bn' ? 'শীঘ্রই' : 'Soon'}</b>}
+            </header>
+            <strong>{text(item.title)}</strong>
+            <p>{text(item.summary)}</p>
+            <footer>
+              {item.available
+                ? <><span>{total} {lang === 'bn' ? 'টি টপিক' : 'topics'}</span><span className="catalog-open">{done ? (lang === 'bn' ? 'চালিয়ে যান' : 'Continue') : (lang === 'bn' ? 'শুরু করুন' : 'Start')} <Icon name="arrow" /></span></>
+                : <span>{lang === 'bn' ? 'তৈরি হচ্ছে' : 'In development'}</span>}
+            </footer>
+          </button>
+        )
+      })}
     </div>
   </>
 }

@@ -1,17 +1,17 @@
 import './globals.css'
 
 export const metadata = {
-  applicationName: 'SystemPath',
-  title: 'SystemPath | System Design in Bangla & English',
+  applicationName: 'CodePath',
+  title: 'CodePath | System Design, DSA & more in Bangla & English',
   description:
-    'Learn system design from fundamentals to practical interview architectures with bilingual lessons, diagrams, exams, labs, and a simulator.',
-  keywords: ['system design', 'architecture', 'interview prep', 'bangla', 'scalability', 'distributed systems'],
+    'Learn system design and data structures & algorithms with bilingual lessons, visual diagrams, exams, and guided labs — more courses on the way.',
+  keywords: ['system design', 'data structures', 'algorithms', 'dsa', 'architecture', 'interview prep', 'bangla', 'scalability', 'distributed systems'],
   manifest: '/manifest.webmanifest',
   robots: { index: true, follow: true },
   openGraph: {
-    title: 'SystemPath | Learn system design visually',
+    title: 'CodePath | Learn system design & DSA visually',
     description:
-      'Forty bilingual lessons with visual architecture diagrams, exams, guided labs, and an interactive capacity simulator.',
+      'Bilingual lessons with visual diagrams, exams, and guided labs across System Design and Data Structures & Algorithms.',
     type: 'website',
   },
 }

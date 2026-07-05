@@ -38,7 +38,7 @@ export default function Onboarding({ lang, onFinish }) {
   const canContinue = step === 0 ? Boolean(goal) : step === 1 ? Boolean(experience) : step === 2 ? Object.keys(answers).length === diagnosticQuestions.length : Boolean(pace)
 
   return <div className="onboarding-backdrop"><section className="onboarding" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
-    <header><a className="onboarding-brand" href="/"><span>S</span><strong>SystemPath</strong></a><div className="onboarding-progress">{[0, 1, 2, 3].map((index) => <i className={index <= step ? 'active' : ''} key={index} />)}</div><button onClick={() => complete(false)}>{bn ? 'এড়িয়ে যান' : 'Skip for now'}</button></header>
+    <header><a className="onboarding-brand" href="/"><span>C</span><strong>CodePath</strong></a><div className="onboarding-progress">{[0, 1, 2, 3].map((index) => <i className={index <= step ? 'active' : ''} key={index} />)}</div><button onClick={() => complete(false)}>{bn ? 'এড়িয়ে যান' : 'Skip for now'}</button></header>
     <div className="onboarding-body">
       {step === 0 && <div className="onboarding-step"><span className="onboarding-kicker">01 · {bn ? 'আপনার লক্ষ্য' : 'Your goal'}</span><h1 id="onboarding-title">{bn ? 'আপনি কেন সিস্টেম ডিজাইন শিখছেন?' : 'What are you learning system design for?'}</h1><p>{bn ? 'আপনার লক্ষ্য অনুযায়ী আমরা উদাহরণ, অনুশীলন ও পরবর্তী পাঠ সাজাব।' : 'We’ll use your goal to shape the examples, practice, and recommended next lesson.'}</p><div className="onboarding-choice-grid">{[
         ['interview', '◎', 'Interview preparation', 'ইন্টারভিউ প্রস্তুতি', 'Build a repeatable answer framework.', 'একটি নির্ভরযোগ্য উত্তর ফ্রেমওয়ার্ক তৈরি করুন।'],

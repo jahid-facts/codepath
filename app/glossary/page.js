@@ -1,7 +1,7 @@
 import LearningApp from '../LearningApp'
 
 export const metadata = {
-  title: 'Glossary | SystemPath',
+  title: 'Glossary | CodePath',
   description: 'Every core system-design term and concept in one searchable place.',
 }
 

@@ -102,7 +102,7 @@ export default function ProfilePanel({ progress, setProgress, lang, onClose }) {
           <p>{copy('Progress stays in this browser. You can change your learning path or move a backup to another device.', 'অগ্রগতি এই ব্রাউজারে থাকে। শেখার পথ বদলাতে বা অন্য ডিভাইসে ব্যাকআপ নিতে পারেন।')}</p>
           <button onClick={editLearningPath}><span>✦</span><div><strong>{copy('Update learning path', 'শেখার পথ আপডেট')}</strong><small>{copy('Goal, experience, diagnostic and pace', 'লক্ষ্য, অভিজ্ঞতা, ডায়াগনস্টিক ও গতি')}</small></div><Arrow /></button>
           <button onClick={exportProgress}><span>⇩</span><div><strong>{copy('Download progress', 'অগ্রগতি ডাউনলোড')}</strong><small>JSON backup</small></div><Arrow /></button>
-          <label><span>⇧</span><div><strong>{copy('Restore backup', 'ব্যাকআপ ফিরিয়ে আনুন')}</strong><small>SystemPath JSON</small></div><Arrow /><input type="file" accept="application/json" onChange={importProgress} /></label>
+          <label><span>⇧</span><div><strong>{copy('Restore backup', 'ব্যাকআপ ফিরিয়ে আনুন')}</strong><small>CodePath JSON</small></div><Arrow /><input type="file" accept="application/json" onChange={importProgress} /></label>
         </section>
 
         <section className="data-controls privacy-controls">
@@ -117,7 +117,7 @@ export default function ProfilePanel({ progress, setProgress, lang, onClose }) {
           <button className="danger-control" onClick={reset}><span>×</span><div><strong>{copy('Reset all progress', 'সব অগ্রগতি মুছুন')}</strong><small>{copy('Cannot be undone', 'ফেরানো যাবে না')}</small></div></button>
           {status && <div className="profile-status" role="status">{status}</div>}
         </section>
-        <footer>SystemPath · <a href="/privacy">{copy('Privacy policy', 'গোপনীয়তা নীতি')}</a> · {copy('No account required', 'অ্যাকাউন্ট প্রয়োজন নেই')}</footer>
+        <footer>CodePath · <a href="/privacy">{copy('Privacy policy', 'গোপনীয়তা নীতি')}</a> · {copy('No account required', 'অ্যাকাউন্ট প্রয়োজন নেই')}</footer>
       </aside>
     </div>
   )

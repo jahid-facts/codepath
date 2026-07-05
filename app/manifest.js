@@ -1,8 +1,8 @@
 export default function manifest() {
   return {
-    name: 'SystemPath — System Design Learning',
-    short_name: 'SystemPath',
-    description: 'Bilingual visual system-design lessons, exams, labs, and architecture simulator.',
+    name: 'CodePath — System Design, DSA & more',
+    short_name: 'CodePath',
+    description: 'Bilingual visual lessons, exams, and labs for system design, data structures & algorithms, and more.',
     start_url: '/',
     display: 'standalone',
     background_color: '#fbfaf7',

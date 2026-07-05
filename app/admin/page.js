@@ -6,7 +6,7 @@ import AdminDashboard from './AdminDashboard'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-export const metadata = { title: 'Analytics | SystemPath Admin', robots: { index: false, follow: false } }
+export const metadata = { title: 'Analytics | CodePath Admin', robots: { index: false, follow: false } }
 
 export default async function AdminPage() {
   const cookieStore = await cookies()

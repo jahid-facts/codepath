@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { ADMIN_COOKIE, verifyAdminSession } from '../../../lib/admin-auth'
 import LoginForm from './LoginForm'
 
-export const metadata = { title: 'Admin sign in | SystemPath', robots: { index: false, follow: false } }
+export const metadata = { title: 'Admin sign in | CodePath', robots: { index: false, follow: false } }
 
 export default async function AdminLoginPage() {
   const cookieStore = await cookies()

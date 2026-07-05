@@ -1,10 +1,11 @@
-import { topics } from './data.js'
+import { allTopics as topics, getCourse } from './course-registry.js'
 
 export const STORAGE_KEY = 'system-design-path-v1'
 
 export const defaults = {
   version: 1,
   language: 'en',
+  activeCourse: 'system-design',
   completed: [],
   bookmarks: [],
   recents: [],
@@ -28,6 +29,7 @@ export function normalizeProgress(value) {
   return {
     ...defaults,
     language: value.language === 'bn' ? 'bn' : 'en',
+    activeCourse: getCourse(value.activeCourse)?.available ? value.activeCourse : 'system-design',
     completed: Array.isArray(value.completed) ? [...new Set(value.completed.filter(validTopic))] : [],
     bookmarks: Array.isArray(value.bookmarks) ? [...new Set(value.bookmarks.filter(validTopic))] : [],
     recents: Array.isArray(value.recents) ? [...new Set(value.recents.filter(validTopic))].slice(0, 5) : [],

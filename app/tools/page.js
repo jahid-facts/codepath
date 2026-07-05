@@ -1,7 +1,7 @@
 import LearningApp from '../LearningApp'
 
 export const metadata = {
-  title: 'Tools | SystemPath',
+  title: 'Tools | CodePath',
   description: 'Practice system design with an interactive architecture simulator, guided design labs, and a personalized review center.',
 }
 

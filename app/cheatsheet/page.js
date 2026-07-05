@@ -1,7 +1,7 @@
 import LearningApp from '../LearningApp'
 
 export const metadata = {
-  title: 'Cheatsheet | SystemPath',
+  title: 'Cheatsheet | CodePath',
   description: 'Every system-design idea in brief: the definition, the design principle, the trade-off, and the common mistake.',
 }
 

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import LearningApp from '../../LearningApp'
-import { topics } from '../../data'
+import { allTopics as topics } from '../../course-registry'
 
 export function generateStaticParams() {
   return topics.map((topic) => ({ topicId: topic.id }))
@@ -9,7 +9,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const { topicId } = await params
   const topic = topics.find((item) => item.id === topicId)
-  return topic ? { title: `${topic.title.en} Exam | SystemPath`, robots: { index: false, follow: true } } : {}
+  return topic ? { title: `${topic.title.en} Exam | CodePath`, robots: { index: false, follow: true } } : {}
 }
 
 export default async function ExamRoute({ params }) {
