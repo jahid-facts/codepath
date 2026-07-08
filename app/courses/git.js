@@ -1,0 +1,354 @@
+import { l } from '../data.js'
+
+// Git & GitHub course — bilingual (English / Bangla).
+// Mirrors the DSA course shape so lesson rendering stays data-driven.
+
+export const gitModules = [
+  { id: 'git-foundations', number: '01', title: l('Getting started with Git', 'গিট দিয়ে শুরু'), description: l('Understand what Git and GitHub are, install and configure Git, and learn the three areas every change moves through.', 'গিট ও গিটহাব কী তা বুঝুন, গিট ইনস্টল ও কনফিগার করুন, এবং প্রতিটি পরিবর্তন যে তিন এলাকায় চলে তা শিখুন।'), color: '#e34b87' },
+  { id: 'git-basics', number: '02', title: l('Everyday snapshots', 'প্রতিদিনের স্ন্যাপশট'), description: l('The core loop: create, stage, commit, inspect, ignore, and read your history.', 'মূল লুপ: তৈরি, স্টেজ, কমিট, পরিদর্শন, ইগনোর ও ইতিহাস পড়া।'), color: '#0284c7' },
+  { id: 'git-branching', number: '03', title: l('Branching & merging', 'ব্রাঞ্চিং ও মার্জিং'), description: l('Work in isolation with branches, then combine changes with merge, rebase, and tags.', 'ব্রাঞ্চ দিয়ে আলাদাভাবে কাজ করুন, তারপর merge, rebase ও ট্যাগ দিয়ে পরিবর্তন মেলান।'), color: '#0f9f78' },
+  { id: 'git-remote', number: '04', title: l('Remotes & GitHub', 'রিমোট ও গিটহাব'), description: l('Connect to GitHub, sync with fetch/pull/push, authenticate, and collaborate through pull requests.', 'গিটহাবে যুক্ত হন, fetch/pull/push দিয়ে সিংক করুন, অথেন্টিকেট করুন ও পুল রিকোয়েস্টে সহযোগিতা করুন।'), color: '#7c3aed' },
+  { id: 'git-undo', number: '05', title: l('Undo & recover', 'আনডু ও পুনরুদ্ধার'), description: l('Fix mistakes safely with restore, reset, revert, stash, and the reflog safety net.', 'restore, reset, revert, stash ও reflog সেফটি-নেট দিয়ে ভুল নিরাপদে ঠিক করুন।'), color: '#d97706' },
+  { id: 'git-advanced', number: '06', title: l('Advanced Git', 'অ্যাডভান্সড গিট'), description: l('Rewrite history cleanly, pick commits, run hooks, sign commits, and use worktrees and submodules.', 'ইতিহাস পরিষ্কারভাবে বদলান, কমিট বাছুন, হুক চালান, কমিট সাইন করুন ও ওয়ার্কট্রি-সাবমডিউল ব্যবহার করুন।'), color: '#0891b2' },
+  { id: 'git-automation', number: '07', title: l('GitHub Actions & YAML', 'গিটহাব অ্যাকশন ও YAML'), description: l('Automate testing and deployment with workflow YAML, secrets, CI pipelines, and Dependabot.', 'ওয়ার্কফ্লো YAML, সিক্রেট, CI পাইপলাইন ও Dependabot দিয়ে টেস্ট ও ডিপ্লয় অটোমেট করুন।'), color: '#6c5ce7' },
+]
+
+const rawTopics = [
+  // ── Foundations ───────────────────────────────────────────────────────────
+  ['git-what', 'git-foundations', 'What are Git & GitHub?', 'গিট ও গিটহাব কী?', 'Beginner', 10, 'git-flow',
+    'Git is a version control system that saves snapshots of your project; GitHub is a website that hosts those repositories and adds collaboration.', 'গিট একটি ভার্সন কন্ট্রোল সিস্টেম যা প্রকল্পের স্ন্যাপশট সংরক্ষণ করে; গিটহাব একটি ওয়েবসাইট যা সেই রিপোজিটরি হোস্ট করে ও সহযোগিতা যোগ করে।',
+    'Git is the save-game system for your code; GitHub is the cloud where you share those saves with teammates.', 'গিট আপনার কোডের সেভ-গেম সিস্টেম; গিটহাব সেই সেভ টিমমেটদের সঙ্গে শেয়ার করার ক্লাউড।',
+    'Use Git locally to track every change, and push to GitHub when you want to back up, share, or collaborate.', 'প্রতিটি পরিবর্তন ট্র্যাক করতে লোকালি গিট ব্যবহার করুন, আর ব্যাকআপ, শেয়ার বা সহযোগিতার সময় গিটহাবে পুশ করুন।',
+    'Git works fully offline and is the real engine; GitHub is optional hosting—but that is where reviews, issues, and CI live.', 'গিট পুরোপুরি অফলাইনে চলে ও আসল ইঞ্জিন; গিটহাব ঐচ্ছিক হোস্টিং—তবে রিভিউ, ইস্যু ও CI সেখানেই থাকে।',
+    'Thinking Git and GitHub are the same thing, or that your work is safe before you have pushed it.', 'গিট ও গিটহাবকে এক ভাবা, বা পুশ করার আগেই কাজ নিরাপদ ভাবা।'],
+  ['git-install-config', 'git-foundations', 'Install & configure Git', 'গিট ইনস্টল ও কনফিগার', 'Beginner', 12, 'algo-flow',
+    'After installing Git, set your name and email once—these are stamped onto every commit you create.', 'গিট ইনস্টলের পর একবার নাম ও ইমেইল সেট করুন—এগুলো আপনার তৈরি প্রতিটি কমিটে বসে।',
+    'Signing the inside cover of every book before you start writing—your identity travels with the work.', 'লেখা শুরুর আগে প্রতিটি বইয়ের ভেতরের মলাটে সই করা—পরিচয় কাজের সঙ্গে যায়।',
+    'Run git config --global for user.name and user.email, and set init.defaultBranch to main.', 'user.name ও user.email-এর জন্য git config --global চালান, এবং init.defaultBranch main সেট করুন।',
+    'Global config applies everywhere; use local config inside a repo when one project needs a different identity.', 'গ্লোবাল কনফিগ সর্বত্র প্রযোজ্য; কোনো প্রকল্পে আলাদা পরিচয় লাগলে রিপোর ভেতরে লোকাল কনফিগ নিন।',
+    'Committing for months with a wrong or missing email, so GitHub never links the commits to you.', 'মাসের পর মাস ভুল বা অনুপস্থিত ইমেইলে কমিট করা, ফলে গিটহাব কমিটগুলো আপনার সঙ্গে যুক্ত করে না।'],
+  ['git-three-areas', 'git-foundations', 'The three areas: working, staging, repo', 'তিন এলাকা: ওয়ার্কিং, স্টেজিং, রিপো', 'Beginner', 12, 'git-areas',
+    'Every file lives in one of three areas: the working directory you edit, the staging area you prepare, and the repository you commit to.', 'প্রতিটি ফাইল তিন এলাকার একটিতে থাকে: যে ওয়ার্কিং ডিরেক্টরি আপনি এডিট করেন, যে স্টেজিং এলাকা প্রস্তুত করেন, ও যে রিপোজিটরিতে কমিট করেন।',
+    'A shopping cart: the shelves (working dir), the cart you fill (staging), and the receipt after checkout (commit).', 'একটি শপিং কার্ট: তাক (ওয়ার্কিং ডিরেক্টরি), যে কার্ট ভরেন (স্টেজিং), ও চেকআউটের রসিদ (কমিট)।',
+    'Edit files, git add the ones you want to include, then git commit to record exactly that set as a snapshot.', 'ফাইল এডিট করুন, যেগুলো রাখবেন সেগুলো git add করুন, তারপর ঠিক সেই সেটটি স্ন্যাপশট হিসেবে রাখতে git commit করুন।',
+    'Staging adds one extra step, but it lets you craft clean, focused commits from a messy working directory.', 'স্টেজিং একটি বাড়তি ধাপ যোগ করে, তবে অগোছালো ওয়ার্কিং ডিরেক্টরি থেকে পরিষ্কার, নির্দিষ্ট কমিট বানাতে দেয়।',
+    'Using git add . blindly and committing files (secrets, build output) you never meant to include.', 'অন্ধভাবে git add . ব্যবহার করে এমন ফাইল (সিক্রেট, বিল্ড আউটপুট) কমিট করা যা রাখার কথা ছিল না।'],
+
+  // ── Everyday snapshots ────────────────────────────────────────────────────
+  ['git-init-clone', 'git-basics', 'Create or clone a repository', 'রিপোজিটরি তৈরি বা ক্লোন', 'Beginner', 12, 'git-remote',
+    'git init turns a folder into a new repository; git clone copies an existing remote repository to your machine.', 'git init একটি ফোল্ডারকে নতুন রিপোজিটরিতে পরিণত করে; git clone বিদ্যমান রিমোট রিপোজিটরি আপনার মেশিনে কপি করে।',
+    'init starts a blank notebook; clone photocopies an existing one, history and all.', 'init একটি ফাঁকা খাতা শুরু করে; clone বিদ্যমান একটির ইতিহাসসহ ফটোকপি করে।',
+    'Use git init for a brand-new project; use git clone <url> to start from a repo that already exists on GitHub.', 'নতুন প্রকল্পে git init নিন; গিটহাবে আগে থেকে থাকা রিপো থেকে শুরু করতে git clone <url> ব্যবহার করুন।',
+    'A shallow clone (--depth 1) is fast and small but drops old history, which some operations need.', 'শ্যালো ক্লোন (--depth 1) দ্রুত ও ছোট, তবে পুরনো ইতিহাস বাদ দেয়, যা কিছু অপারেশনে দরকার হয়।',
+    'Running git init inside an already-cloned repo, creating a confusing nested repository.', 'ইতিমধ্যে ক্লোন করা রিপোর ভেতরে git init চালিয়ে বিভ্রান্তিকর নেস্টেড রিপোজিটরি বানানো।'],
+  ['git-staging-commit', 'git-basics', 'Stage & commit changes', 'পরিবর্তন স্টেজ ও কমিট', 'Beginner', 14, 'git-areas',
+    'git add moves changes into staging; git commit records the staged snapshot with a message that explains it.', 'git add পরিবর্তন স্টেজিংয়ে নেয়; git commit স্টেজ করা স্ন্যাপশট একটি ব্যাখ্যামূলক মেসেজসহ রাখে।',
+    'add is loading the camera frame; commit is pressing the shutter to capture that exact moment.', 'add হলো ক্যামেরার ফ্রেম সাজানো; commit হলো ঠিক সেই মুহূর্তটি ধরতে শাটার চাপা।',
+    'Stage related changes together, then commit with a clear message in the imperative, like "add login form".', 'সম্পর্কিত পরিবর্তন একসঙ্গে স্টেজ করুন, তারপর "add login form"-এর মতো স্পষ্ট ইম্পারেটিভ মেসেজে কমিট করুন।',
+    'Small, focused commits are easy to review and revert; giant commits are fast to make but hard to undo cleanly.', 'ছোট, নির্দিষ্ট কমিট রিভিউ ও রিভার্ট করা সহজ; বিশাল কমিট বানানো দ্রুত কিন্তু পরিষ্কারভাবে আনডু করা কঠিন।',
+    'Bundling unrelated changes into one commit, so you cannot revert one without losing the others.', 'অসম্পর্কিত পরিবর্তন এক কমিটে জড়ো করা, ফলে একটিকে রিভার্ট করলে বাকিগুলোও হারায়।'],
+  ['git-status-diff', 'git-basics', 'Inspect changes: status & diff', 'পরিবর্তন দেখা: status ও diff', 'Beginner', 12, 'algo-flow',
+    'git status shows what has changed and what is staged; git diff shows the exact line-by-line differences.', 'git status দেখায় কী বদলেছে ও কী স্টেজ করা; git diff দেখায় লাইন-ধরে ঠিক পার্থক্য।',
+    'status is the summary at the top of a document review; diff is track-changes showing every edit.', 'status হলো ডকুমেন্ট রিভিউর ওপরের সারাংশ; diff হলো প্রতিটি এডিট দেখানো ট্র্যাক-চেঞ্জেস।',
+    'Run git status often, and git diff --staged right before committing to confirm exactly what you are recording.', 'ঘন ঘন git status চালান, আর কমিটের ঠিক আগে কী রাখছেন নিশ্চিত করতে git diff --staged দেখুন।',
+    'status is a quick overview but hides details; diff is precise but noisy on large changes.', 'status দ্রুত সারাংশ কিন্তু বিস্তারিত লুকায়; diff নিখুঁত কিন্তু বড় পরিবর্তনে ঘিঞ্জি।',
+    'Committing without checking the diff and including a stray debug line or leftover conflict marker.', 'diff না দেখে কমিট করা এবং ভুলে একটি ডিবাগ লাইন বা রয়ে যাওয়া কনফ্লিক্ট মার্কার রাখা।'],
+  ['git-gitignore', 'git-basics', 'Ignoring files with .gitignore', '.gitignore দিয়ে ফাইল বাদ', 'Beginner', 10, 'algo-flow',
+    'A .gitignore file lists patterns for files Git should never track, like secrets, dependencies, and build output.', '.gitignore ফাইল এমন প্যাটার্ন রাখে যেসব ফাইল গিট কখনো ট্র্যাক করবে না—যেমন সিক্রেট, ডিপেন্ডেন্সি ও বিল্ড আউটপুট।',
+    'A "do not pack" list before a trip—things that should stay home and never enter the suitcase.', 'ভ্রমণের আগে "প্যাক করবেন না" তালিকা—যা বাড়িতে থাকবে, স্যুটকেসে ঢুকবে না।',
+    'Add node_modules/, .env, and build folders to .gitignore before your first commit.', 'প্রথম কমিটের আগে node_modules/, .env ও বিল্ড ফোল্ডার .gitignore-এ যোগ করুন।',
+    'Ignoring keeps the repo clean, but .gitignore only affects untracked files—already-committed files keep being tracked.', 'ইগনোর রিপো পরিষ্কার রাখে, তবে .gitignore শুধু আনট্র্যাকড ফাইলে কাজ করে—আগে কমিট করা ফাইল ট্র্যাক থাকতেই থাকে।',
+    'Adding a rule after a secret is already committed and assuming it is now hidden—the history still holds it.', 'সিক্রেট কমিট হয়ে যাওয়ার পর নিয়ম যোগ করে ভাবা এটি এখন লুকানো—ইতিহাসে তা রয়েই যায়।'],
+  ['git-history', 'git-basics', 'Read history: log, show, blame', 'ইতিহাস পড়া: log, show, blame', 'Beginner', 14, 'git-branch',
+    'git log walks the commit history; git show inspects one commit; git blame shows who last changed each line.', 'git log কমিট ইতিহাস দেখায়; git show একটি কমিট দেখায়; git blame প্রতিটি লাইন কে শেষ বদলেছে তা দেখায়।',
+    'A document’s edit history: the full timeline (log), one revision (show), and margin notes of who wrote each line (blame).', 'ডকুমেন্টের এডিট ইতিহাস: পুরো টাইমলাইন (log), একটি রিভিশন (show), ও কে কোন লাইন লিখেছে তার নোট (blame)।',
+    'Use git log --oneline --graph --all to see branches visually, and git blame to trace when a line appeared.', 'ব্রাঞ্চ ভিজ্যুয়ালি দেখতে git log --oneline --graph --all ব্যবহার করুন, আর একটি লাইন কখন এসেছে খুঁজতে git blame।',
+    'Rich history is invaluable for debugging, but it only helps if commits are small and messages are meaningful.', 'সমৃদ্ধ ইতিহাস ডিবাগিংয়ে অমূল্য, তবে কমিট ছোট ও মেসেজ অর্থপূর্ণ হলেই তা কাজে লাগে।',
+    'Writing vague messages like "update" or "fix", making the log useless when you need to find a change later.', '"update" বা "fix"-এর মতো অস্পষ্ট মেসেজ লেখা, ফলে পরে পরিবর্তন খুঁজতে গেলে log অকেজো।'],
+
+  // ── Branching & merging ───────────────────────────────────────────────────
+  ['git-branches', 'git-branching', 'Branches & HEAD', 'ব্রাঞ্চ ও HEAD', 'Beginner', 14, 'git-branch',
+    'A branch is a movable pointer to a commit, letting you develop a feature in isolation without touching main.', 'ব্রাঞ্চ একটি কমিটের দিকে সরানো-যোগ্য পয়েন্টার, যা main স্পর্শ না করে আলাদাভাবে ফিচার বানাতে দেয়।',
+    'A parallel draft of a document—experiment freely, and merge back only when it is ready.', 'ডকুমেন্টের একটি সমান্তরাল খসড়া—স্বাধীনভাবে পরীক্ষা করুন, প্রস্তুত হলেই মার্জ করুন।',
+    'Create a branch per task with git switch -c feature/name, and keep main always working.', 'প্রতি কাজে git switch -c feature/name দিয়ে ব্রাঞ্চ বানান, আর main সবসময় সচল রাখুন।',
+    'Branches are cheap and instant in Git, but long-lived branches drift far from main and merge painfully.', 'গিটে ব্রাঞ্চ সস্তা ও তাৎক্ষণিক, তবে দীর্ঘস্থায়ী ব্রাঞ্চ main থেকে অনেক দূরে সরে গিয়ে কষ্টে মার্জ হয়।',
+    'Committing straight to main for everything, so one broken change blocks the whole team.', 'সবকিছু সরাসরি main-এ কমিট করা, ফলে একটি ভাঙা পরিবর্তন পুরো টিমকে আটকে দেয়।'],
+  ['git-merge', 'git-branching', 'Merging & conflicts', 'মার্জিং ও কনফ্লিক্ট', 'Intermediate', 16, 'git-branch',
+    'git merge combines another branch into yours, creating a merge commit when both branches have advanced.', 'git merge অন্য ব্রাঞ্চকে আপনারটিতে মেলায়, দুই ব্রাঞ্চ এগোলে একটি মার্জ কমিট বানায়।',
+    'Combining two editors’ versions of a chapter, reconciling any lines they both changed.', 'একটি অধ্যায়ের দুই সম্পাদকের সংস্করণ মেলানো, দুজনে বদলানো লাইনগুলো মিটিয়ে।',
+    'Merge finished features into main; when Git reports a conflict, edit the marked lines, git add, then commit.', 'শেষ হওয়া ফিচার main-এ মার্জ করুন; গিট কনফ্লিক্ট জানালে চিহ্নিত লাইন এডিট করে git add করুন, তারপর কমিট।',
+    'Merging preserves exactly what happened and is safe on shared branches, but the history can look tangled.', 'মার্জিং ঠিক যা ঘটেছে তা রাখে ও শেয়ার্ড ব্রাঞ্চে নিরাপদ, তবে ইতিহাস জটিল দেখাতে পারে।',
+    'Committing the conflict markers by accident instead of resolving them first.', 'কনফ্লিক্ট আগে না মিটিয়ে ভুলে কনফ্লিক্ট মার্কার কমিট করা।'],
+  ['git-rebase', 'git-branching', 'Rebase & a linear history', 'রিবেস ও লিনিয়ার ইতিহাস', 'Intermediate', 16, 'git-branch',
+    'git rebase replays your commits on top of another branch, producing a clean, linear history with no merge commit.', 'git rebase আপনার কমিটগুলো অন্য ব্রাঞ্চের ওপরে আবার বসায়, মার্জ কমিট ছাড়া পরিষ্কার লিনিয়ার ইতিহাস বানায়।',
+    'Re-writing your notes onto the latest master copy so everything reads in one straight line.', 'আপনার নোট সর্বশেষ মাস্টার কপির ওপরে আবার লেখা, যাতে সব এক সরল রেখায় পড়া যায়।',
+    'Rebase your own feature branch onto the latest main before opening a pull request to keep history tidy.', 'ইতিহাস পরিপাটি রাখতে পুল রিকোয়েস্ট খোলার আগে নিজের ফিচার ব্রাঞ্চকে সর্বশেষ main-এ রিবেস করুন।',
+    'Rebase gives a readable line, but it rewrites commit hashes—never rebase commits others have already pulled.', 'রিবেস পাঠযোগ্য রেখা দেয়, তবে কমিট হ্যাশ বদলায়—অন্যরা টেনে নিয়েছে এমন কমিট কখনো রিবেস করবেন না।',
+    'Rebasing a shared branch and force-pushing, forcing painful conflicts on everyone else.', 'শেয়ার্ড ব্রাঞ্চ রিবেস করে ফোর্স-পুশ করা, ফলে বাকিদের কষ্টকর কনফ্লিক্টে ফেলা।'],
+  ['git-tags', 'git-branching', 'Tags & releases', 'ট্যাগ ও রিলিজ', 'Intermediate', 12, 'algo-flow',
+    'A tag marks a specific commit with a permanent name, usually a release version like v1.2.0.', 'ট্যাগ একটি নির্দিষ্ট কমিটকে স্থায়ী নাম দেয়, সাধারণত v1.2.0-এর মতো রিলিজ ভার্সন।',
+    'A bookmark labelled "final edition" pinned to one exact page of the history.', 'ইতিহাসের ঠিক একটি পৃষ্ঠায় আটকানো "ফাইনাল সংস্করণ" লেখা বুকমার্ক।',
+    'Create annotated tags with git tag -a v1.0.0 -m "..." and push them explicitly with git push --follow-tags.', 'git tag -a v1.0.0 -m "..." দিয়ে অ্যানোটেটেড ট্যাগ বানান এবং git push --follow-tags দিয়ে স্পষ্টভাবে পুশ করুন।',
+    'Annotated tags store author, date, and message and power GitHub Releases; lightweight tags are just private bookmarks.', 'অ্যানোটেটেড ট্যাগ লেখক, তারিখ ও মেসেজ রাখে এবং গিটহাব রিলিজ চালায়; লাইটওয়েট ট্যাগ শুধু ব্যক্তিগত বুকমার্ক।',
+    'Forgetting that tags are not pushed by default, so your release never appears on GitHub.', 'ট্যাগ ডিফল্টে পুশ হয় না ভুলে যাওয়া, ফলে রিলিজ গিটহাবে আসে না।'],
+
+  // ── Remotes & GitHub ──────────────────────────────────────────────────────
+  ['git-remotes', 'git-remote', 'Remotes: origin & upstream', 'রিমোট: origin ও upstream', 'Intermediate', 14, 'git-remote',
+    'A remote is a named URL pointing at a copy of your repo; origin is your main one, upstream the repo you forked from.', 'রিমোট হলো আপনার রিপোর একটি কপির দিকে নির্দেশ করা নামযুক্ত URL; origin আপনার প্রধানটি, upstream যেখান থেকে ফর্ক করেছেন।',
+    'Saved addresses in your contacts—short names (origin, upstream) that stand for long URLs.', 'কন্টাক্টে সংরক্ষিত ঠিকানা—ছোট নাম (origin, upstream) যা লম্বা URL-কে বোঝায়।',
+    'Use git remote -v to see your remotes, and git remote add to connect a local repo to GitHub.', 'রিমোট দেখতে git remote -v ব্যবহার করুন, আর লোকাল রিপোকে গিটহাবে যুক্ত করতে git remote add।',
+    'Remotes let many people share one project, but you always work on local copies until you fetch or push.', 'রিমোট অনেককে এক প্রকল্প শেয়ার করতে দেয়, তবে fetch বা push না করা পর্যন্ত আপনি লোকাল কপিতেই কাজ করেন।',
+    'Assuming git commit updates GitHub—commits stay local until you explicitly push them.', 'git commit গিটহাব আপডেট করে ভাবা—স্পষ্টভাবে push না করলে কমিট লোকালই থাকে।'],
+  ['git-push-pull', 'git-remote', 'Sync: fetch, pull, push', 'সিংক: fetch, pull, push', 'Intermediate', 16, 'git-remote',
+    'fetch downloads remote commits, pull fetches and integrates them, and push uploads your commits to the remote.', 'fetch রিমোট কমিট নামায়, pull সেগুলো নামিয়ে যুক্ত করে, আর push আপনার কমিট রিমোটে তোলে।',
+    'A shared drive: pull to get everyone’s latest work, push to publish yours.', 'একটি শেয়ার্ড ড্রাইভ: সবার সর্বশেষ কাজ পেতে pull, নিজেরটা প্রকাশ করতে push।',
+    'Pull (or fetch) before you start and before you push, and use git push -u origin <branch> the first time.', 'শুরুর আগে ও push-এর আগে pull (বা fetch) করুন, আর প্রথমবার git push -u origin <branch> ব্যবহার করুন।',
+    'fetch is always safe because it changes nothing locally; pull is convenient but can trigger merge conflicts.', 'fetch সবসময় নিরাপদ কারণ লোকালি কিছু বদলায় না; pull সুবিধাজনক তবে মার্জ কনফ্লিক্ট আনতে পারে।',
+    'Reaching for git push --force to fix a rejected push, silently erasing a teammate’s commits.', 'প্রত্যাখ্যাত push ঠিক করতে git push --force নেওয়া, নীরবে টিমমেটের কমিট মুছে ফেলা।'],
+  ['git-auth', 'git-remote', 'Authentication: SSH, HTTPS, tokens', 'অথেন্টিকেশন: SSH, HTTPS, টোকেন', 'Intermediate', 14, 'algo-flow',
+    'GitHub authenticates you with SSH keys or an HTTPS personal access token—never your account password.', 'গিটহাব আপনাকে SSH কী বা HTTPS পার্সোনাল অ্যাক্সেস টোকেন দিয়ে যাচাই করে—কখনো অ্যাকাউন্ট পাসওয়ার্ড দিয়ে নয়।',
+    'A key card (SSH) or a single-use guest pass (token) instead of shouting your master password at the door.', 'দরজায় মাস্টার পাসওয়ার্ড না বলে একটি কী-কার্ড (SSH) বা এককালীন গেস্ট পাস (টোকেন)।',
+    'Generate an SSH key with ssh-keygen -t ed25519, add the public key to GitHub, and test with ssh -T git@github.com.', 'ssh-keygen -t ed25519 দিয়ে SSH কী বানান, পাবলিক কী গিটহাবে যোগ করুন, ও ssh -T git@github.com দিয়ে পরীক্ষা করুন।',
+    'SSH means no password prompts once set up; HTTPS tokens are easier on locked-down networks but expire and must be rotated.', 'একবার সেট হলে SSH-এ পাসওয়ার্ড চাওয়া হয় না; HTTPS টোকেন সীমাবদ্ধ নেটওয়ার্কে সহজ কিন্তু মেয়াদ শেষ হয় ও বদলাতে হয়।',
+    'Pasting a personal access token into code or a commit, leaking access to your whole account.', 'পার্সোনাল অ্যাক্সেস টোকেন কোড বা কমিটে বসানো, পুরো অ্যাকাউন্টের অ্যাক্সেস ফাঁস করা।'],
+  ['git-pull-requests', 'git-remote', 'Pull requests & code review', 'পুল রিকোয়েস্ট ও কোড রিভিউ', 'Intermediate', 15, 'git-flow',
+    'A pull request proposes merging your branch, showing the diff and inviting review and automated checks before it lands.', 'পুল রিকোয়েস্ট আপনার ব্রাঞ্চ মার্জের প্রস্তাব দেয়, diff দেখায় এবং মার্জের আগে রিভিউ ও স্বয়ংক্রিয় চেক আহ্বান করে।',
+    'Submitting an article to an editor: they read, comment, request changes, and only then publish.', 'সম্পাদকের কাছে নিবন্ধ জমা দেওয়া: তিনি পড়েন, মন্তব্য করেন, পরিবর্তন চান, তারপরই প্রকাশ করেন।',
+    'Push your branch, open a PR with a clear description, link issues with "Closes #12", and merge once approved and green.', 'ব্রাঞ্চ push করুন, স্পষ্ট বর্ণনাসহ PR খুলুন, "Closes #12" দিয়ে ইস্যু যুক্ত করুন, ও অনুমোদিত ও সবুজ হলে মার্জ করুন।',
+    'Reviews catch bugs and share knowledge, but they add latency—keep PRs small so they are quick to review.', 'রিভিউ বাগ ধরে ও জ্ঞান ভাগ করে, তবে দেরি যোগ করে—দ্রুত রিভিউর জন্য PR ছোট রাখুন।',
+    'Opening one huge pull request with dozens of files, which reviewers rubber-stamp without really reading.', 'কয়েক ডজন ফাইলসহ একটি বিশাল পুল রিকোয়েস্ট খোলা, যা রিভিউয়াররা না পড়েই অনুমোদন করে।'],
+  ['git-forks', 'git-remote', 'Forks & contributing', 'ফর্ক ও অবদান', 'Intermediate', 13, 'git-remote',
+    'A fork is your own server-side copy of someone else’s repo, letting you contribute without write access to the original.', 'ফর্ক হলো অন্যের রিপোর আপনার নিজস্ব সার্ভার-সাইড কপি, যা মূলটিতে রাইট অ্যাক্সেস ছাড়াই অবদান রাখতে দেয়।',
+    'Photocopying a shared recipe to tweak at home, then suggesting your improvements back to the author.', 'একটি শেয়ার্ড রেসিপি ফটোকপি করে বাড়িতে বদলানো, তারপর উন্নতিগুলো লেখকের কাছে প্রস্তাব করা।',
+    'Fork the repo, add the original as an upstream remote, and regularly fetch upstream to stay in sync.', 'রিপো ফর্ক করুন, মূলটিকে upstream রিমোট হিসেবে যোগ করুন, ও সিংকে থাকতে নিয়মিত upstream fetch করুন।',
+    'Forks enable open-source contribution from anyone, but your fork drifts out of date unless you sync it with upstream.', 'ফর্ক যে কারো ওপেন-সোর্স অবদান সম্ভব করে, তবে upstream-এর সঙ্গে সিংক না করলে ফর্ক পুরনো হয়ে যায়।',
+    'Working for weeks on a stale fork, then hitting massive conflicts because upstream moved far ahead.', 'সপ্তাহের পর সপ্তাহ পুরনো ফর্কে কাজ করা, তারপর upstream অনেক এগিয়ে যাওয়ায় বিশাল কনফ্লিক্টে পড়া।'],
+
+  // ── Undo & recover ────────────────────────────────────────────────────────
+  ['git-restore', 'git-undo', 'Discard & unstage: restore', 'বাতিল ও আনস্টেজ: restore', 'Intermediate', 12, 'git-areas',
+    'git restore discards unstaged edits or unstages files, without touching your commit history.', 'git restore আনস্টেজড এডিট বাতিল করে বা ফাইল আনস্টেজ করে, কমিট ইতিহাস স্পর্শ না করে।',
+    'The undo button in an editor for changes you have not saved to history yet.', 'যে পরিবর্তন এখনো ইতিহাসে সেভ করেননি তার জন্য এডিটরের আনডু বোতাম।',
+    'Use git restore <file> to throw away working changes, and git restore --staged <file> to unstage while keeping edits.', 'ওয়ার্কিং পরিবর্তন ফেলে দিতে git restore <file>, আর এডিট রেখে আনস্টেজ করতে git restore --staged <file> ব্যবহার করুন।',
+    'restore is precise and history-safe, but discarding working changes is irreversible—they were never committed.', 'restore নিখুঁত ও ইতিহাস-নিরাপদ, তবে ওয়ার্কিং পরিবর্তন ফেলে দেওয়া অপরিবর্তনীয়—সেগুলো কখনো কমিট হয়নি।',
+    'Running git restore on a file with hours of uncommitted work, expecting to get it back later.', 'ঘণ্টার পর ঘণ্টার আনকমিটেড কাজসহ ফাইলে git restore চালিয়ে পরে ফেরত পাওয়ার আশা করা।'],
+  ['git-reset', 'git-undo', 'Move HEAD: reset (soft/mixed/hard)', 'HEAD সরানো: reset', 'Intermediate', 15, 'git-branch',
+    'git reset moves the current branch to an earlier commit; --soft keeps changes staged, --mixed unstages, --hard deletes them.', 'git reset বর্তমান ব্রাঞ্চকে আগের কমিটে সরায়; --soft পরিবর্তন স্টেজড রাখে, --mixed আনস্টেজ করে, --hard মুছে ফেলে।',
+    'Rewinding a tape: soft and mixed keep the footage in hand, hard erases it entirely.', 'একটি টেপ রিওয়াইন্ড: soft ও mixed ফুটেজ হাতে রাখে, hard পুরো মুছে দেয়।',
+    'Use git reset --soft HEAD~1 to redo the last commit’s message or contents; reserve --hard for changes you truly want gone.', 'শেষ কমিটের মেসেজ বা বিষয়বস্তু আবার করতে git reset --soft HEAD~1 নিন; সত্যিই ফেলে দিতে চাওয়া পরিবর্তনের জন্য --hard রাখুন।',
+    'reset is powerful for local cleanup, but it rewrites history—unsafe on commits you have already pushed to a shared branch.', 'reset লোকাল পরিষ্কারে শক্তিশালী, তবে ইতিহাস বদলায়—শেয়ার্ড ব্রাঞ্চে পুশ করা কমিটে অনিরাপদ।',
+    'Running git reset --hard with uncommitted work in the tree, permanently losing it.', 'ট্রিতে আনকমিটেড কাজ থাকা অবস্থায় git reset --hard চালিয়ে তা স্থায়ীভাবে হারানো।'],
+  ['git-revert', 'git-undo', 'Safe undo: revert', 'নিরাপদ আনডু: revert', 'Intermediate', 12, 'git-branch',
+    'git revert undoes a commit by creating a new commit that applies the opposite changes, leaving history intact.', 'git revert একটি নতুন কমিট বানিয়ে বিপরীত পরিবর্তন প্রয়োগ করে পুরনো কমিট আনডু করে, ইতিহাস অক্ষত রেখে।',
+    'Publishing a correction notice instead of tearing the wrong page out of a printed book.', 'ছাপা বইয়ের ভুল পৃষ্ঠা ছিঁড়ে না ফেলে বরং একটি সংশোধনী প্রকাশ করা।',
+    'Use git revert <sha> to undo a change on a shared branch safely, since it adds history rather than rewriting it.', 'শেয়ার্ড ব্রাঞ্চে নিরাপদে পরিবর্তন আনডু করতে git revert <sha> নিন, কারণ এটি ইতিহাস বদলায় না বরং যোগ করে।',
+    'revert is the safe public undo, but it leaves both the mistake and its reversal visible in the history.', 'revert নিরাপদ পাবলিক আনডু, তবে ভুল ও তার বিপরীত—দুটোই ইতিহাসে দৃশ্যমান রাখে।',
+    'Using git reset to "undo" a pushed commit, diverging from the remote instead of reverting cleanly.', 'পুশ করা কমিট "আনডু" করতে git reset ব্যবহার করা, পরিষ্কারভাবে revert না করে রিমোট থেকে সরে যাওয়া।'],
+  ['git-stash', 'git-undo', 'Shelve work: stash', 'কাজ শেলভ: stash', 'Intermediate', 12, 'algo-flow',
+    'git stash shelves your uncommitted changes and cleans the working directory, so you can switch tasks and restore later.', 'git stash আপনার আনকমিটেড পরিবর্তন শেলভ করে ও ওয়ার্কিং ডিরেক্টরি পরিষ্কার করে, যাতে কাজ বদলে পরে ফিরিয়ে আনতে পারেন।',
+    'Sweeping your half-done work into a drawer to clear the desk for an urgent job.', 'জরুরি কাজের জন্য ডেস্ক খালি করতে অর্ধেক-করা কাজ ড্রয়ারে রাখা।',
+    'Run git stash push -m "note" to shelve work, then git stash pop to bring it back when you return.', 'কাজ শেলভ করতে git stash push -m "note" চালান, তারপর ফিরে এসে git stash pop দিয়ে ফিরিয়ে আনুন।',
+    'Stash is quick for context-switching, but a deep stash stack is easy to forget—and stashes are local, never pushed.', 'কনটেক্সট বদলে stash দ্রুত, তবে গভীর stash স্ট্যাক ভুলে যাওয়া সহজ—আর stash লোকাল, কখনো পুশ হয় না।',
+    'Piling up many stashes without messages, then not knowing which one holds the work you need.', 'মেসেজ ছাড়া অনেক stash জমানো, তারপর কোনটিতে দরকারি কাজ আছে না জানা।'],
+  ['git-reflog', 'git-undo', 'Recover anything: reflog', 'সব পুনরুদ্ধার: reflog', 'Advanced', 13, 'git-branch',
+    'git reflog records every position HEAD has held, so you can recover commits or branches lost to a bad reset or rebase.', 'git reflog HEAD-এর প্রতিটি অবস্থান রাখে, যাতে খারাপ reset বা rebase-এ হারানো কমিট বা ব্রাঞ্চ ফিরে পেতে পারেন।',
+    'A security-camera log of everywhere you have been—rewind to the exact moment before the mistake.', 'আপনি যেখানে গেছেন তার নিরাপত্তা-ক্যামেরা লগ—ভুলের ঠিক আগের মুহূর্তে ফিরে যান।',
+    'When work seems lost, run git reflog, find the commit, and git reset --hard HEAD@{n} back to it.', 'কাজ হারানো মনে হলে git reflog চালান, কমিটটি খুঁজুন, ও git reset --hard HEAD@{n} দিয়ে ফিরে যান।',
+    'reflog can rescue almost any committed work, but only for a limited time and only if the work was committed at all.', 'reflog প্রায় যেকোনো কমিট করা কাজ উদ্ধার করতে পারে, তবে সীমিত সময়ের জন্য এবং কাজটি আদৌ কমিট থাকলেই।',
+    'Panicking after a bad reset and re-cloning, when git reflog would have restored everything in seconds.', 'খারাপ reset-এর পর আতঙ্কে আবার ক্লোন করা, যেখানে git reflog সেকেন্ডেই সব ফিরিয়ে দিত।'],
+
+  // ── Advanced Git ──────────────────────────────────────────────────────────
+  ['git-interactive-rebase', 'git-advanced', 'Interactive rebase', 'ইন্টারেক্টিভ রিবেস', 'Advanced', 16, 'git-branch',
+    'Interactive rebase (git rebase -i) lets you reorder, reword, squash, or drop your recent commits before sharing them.', 'ইন্টারেক্টিভ রিবেস (git rebase -i) শেয়ারের আগে সাম্প্রতিক কমিটগুলো পুনর্বিন্যাস, পুনঃশব্দ, স্কোয়াশ বা ড্রপ করতে দেয়।',
+    'Editing a rough draft before submission—merge paragraphs, fix titles, cut the filler.', 'জমা দেওয়ার আগে খসড়া সম্পাদনা—অনুচ্ছেদ মেলান, শিরোনাম ঠিক করুন, বাড়তি কাটুন।',
+    'Run git rebase -i HEAD~n and change pick to squash, reword, or drop to shape a clean, reviewable history.', 'git rebase -i HEAD~n চালান এবং পরিষ্কার, রিভিউযোগ্য ইতিহাস বানাতে pick-কে squash, reword বা drop-এ বদলান।',
+    'A tidy history helps reviewers, but interactive rebase rewrites commits—only do it on your own un-pushed branch.', 'পরিপাটি ইতিহাস রিভিউয়ারদের সাহায্য করে, তবে ইন্টারেক্টিভ রিবেস কমিট বদলায়—শুধু নিজের আন-পুশড ব্রাঞ্চে করুন।',
+    'Interactive-rebasing commits that are already pushed and shared, breaking everyone else’s branch.', 'ইতিমধ্যে পুশ ও শেয়ার হওয়া কমিটে ইন্টারেক্টিভ-রিবেস করা, বাকিদের ব্রাঞ্চ ভাঙা।'],
+  ['git-cherry-pick', 'git-advanced', 'Cherry-pick & bisect', 'চেরি-পিক ও বাইসেক্ট', 'Advanced', 14, 'git-branch',
+    'git cherry-pick copies a specific commit onto your current branch; git bisect binary-searches history to find a bug’s origin.', 'git cherry-pick একটি নির্দিষ্ট কমিট আপনার বর্তমান ব্রাঞ্চে কপি করে; git bisect বাগের উৎস খুঁজতে ইতিহাসে বাইনারি-সার্চ করে।',
+    'Cherry-pick lifts one paragraph into another document; bisect plays "hot or cold" to locate the broken line.', 'চেরি-পিক এক ডকুমেন্ট থেকে একটি অনুচ্ছেদ তোলে; bisect ভাঙা লাইন খুঁজতে "গরম না ঠান্ডা" খেলে।',
+    'Cherry-pick a hotfix commit onto a release branch; run git bisect start/good/bad to pinpoint a regression fast.', 'একটি হটফিক্স কমিট রিলিজ ব্রাঞ্চে চেরি-পিক করুন; রিগ্রেশন দ্রুত খুঁজতে git bisect start/good/bad চালান।',
+    'Both are precise tools, but cherry-pick duplicates a commit as a new hash, which can confuse a later merge.', 'দুটোই নিখুঁত টুল, তবে চেরি-পিক একটি কমিট নতুন হ্যাশ হিসেবে নকল করে, যা পরের মার্জে বিভ্রান্তি আনতে পারে।',
+    'Cherry-picking many commits one by one when a proper merge or rebase would have been cleaner.', 'একটি সঠিক মার্জ বা রিবেস বেশি পরিষ্কার হতো যেখানে একে একে অনেক কমিট চেরি-পিক করা।'],
+  ['git-hooks-signing', 'git-advanced', 'Hooks & signed commits', 'হুক ও সাইনড কমিট', 'Advanced', 15, 'algo-flow',
+    'Git hooks run scripts on events like commit or push; signing commits proves they genuinely came from you.', 'গিট হুক কমিট বা পুশের মতো ইভেন্টে স্ক্রিপ্ট চালায়; কমিট সাইন করা প্রমাণ করে সেগুলো সত্যিই আপনার থেকে এসেছে।',
+    'A hook is an automatic quality gate at the door; a signature is the wax seal proving authorship.', 'হুক হলো দরজায় স্বয়ংক্রিয় মান-গেট; সাইনেচার হলো লেখকত্ব প্রমাণকারী মোমের সিল।',
+    'Use a pre-commit hook to lint before every commit, and enable commit signing so GitHub shows a "Verified" badge.', 'প্রতি কমিটের আগে লিন্ট করতে pre-commit হুক ব্যবহার করুন, এবং কমিট সাইনিং চালু করুন যাতে গিটহাব "Verified" ব্যাজ দেখায়।',
+    'Hooks enforce standards automatically, but local hooks are not shared by default—teams need Husky or a tracked hooks path.', 'হুক স্বয়ংক্রিয়ভাবে মান রক্ষা করে, তবে লোকাল হুক ডিফল্টে শেয়ার হয় না—টিমের Husky বা ট্র্যাকড হুক পাথ দরকার।',
+    'Relying on a personal pre-commit hook for a team rule, so teammates without it bypass the check entirely.', 'টিম নিয়মের জন্য ব্যক্তিগত pre-commit হুকে নির্ভর করা, ফলে যাদের নেই তারা চেক পুরো এড়িয়ে যায়।'],
+  ['git-submodules-worktree', 'git-advanced', 'Submodules & worktrees', 'সাবমডিউল ও ওয়ার্কট্রি', 'Advanced', 14, 'algo-flow',
+    'A submodule embeds another repo at a fixed commit inside yours; a worktree checks out a second branch in a separate folder.', 'সাবমডিউল আপনার রিপোর ভেতরে অন্য একটি রিপোকে নির্দিষ্ট কমিটে বসায়; ওয়ার্কট্রি আলাদা ফোল্ডারে দ্বিতীয় ব্রাঞ্চ চেকআউট করে।',
+    'A submodule is a book citing another book by exact edition; a worktree is a second desk for a parallel task.', 'সাবমডিউল হলো ঠিক সংস্করণ ধরে অন্য বই উদ্ধৃত করা একটি বই; ওয়ার্কট্রি হলো সমান্তরাল কাজের জন্য দ্বিতীয় ডেস্ক।',
+    'Use git worktree add for a quick hotfix without stashing; use submodules only when you truly need a pinned external repo.', 'স্ট্যাশ ছাড়া দ্রুত হটফিক্সে git worktree add নিন; সত্যিই একটি পিন করা বাহ্যিক রিপো লাগলে তবেই সাবমডিউল নিন।',
+    'Worktrees avoid constant stashing, and submodules pin exact versions—but submodules add real complexity to clone and update.', 'ওয়ার্কট্রি বারবার স্ট্যাশ এড়ায়, আর সাবমডিউল ঠিক ভার্সন পিন করে—তবে সাবমডিউল ক্লোন ও আপডেটে বেশ জটিলতা যোগ করে।',
+    'Cloning a repo with submodules and forgetting --recurse-submodules, ending up with empty submodule folders.', 'সাবমডিউলসহ রিপো ক্লোন করে --recurse-submodules ভুলে যাওয়া, ফলে খালি সাবমডিউল ফোল্ডার।'],
+
+  // ── GitHub Actions & YAML ─────────────────────────────────────────────────
+  ['git-actions-intro', 'git-automation', 'GitHub Actions & YAML basics', 'গিটহাব অ্যাকশন ও YAML বেসিক', 'Intermediate', 16, 'git-flow',
+    'GitHub Actions runs automation defined in YAML files under .github/workflows/, triggered by events like a push or pull request.', 'গিটহাব অ্যাকশন .github/workflows/-এর YAML ফাইলে সংজ্ঞায়িত অটোমেশন চালায়, যা push বা pull request-এর মতো ইভেন্টে ট্রিগার হয়।',
+    'A set of "if this happens, do that" recipes that a robot assistant runs for you on every push.', '"এটা ঘটলে ওটা করো" ধরনের রেসিপির সেট, যা প্রতি পুশে একটি রোবট সহকারী চালায়।',
+    'Create .github/workflows/ci.yml, set on: to your triggers, and remember YAML nests with two spaces—never tabs.', '.github/workflows/ci.yml বানান, on:-এ ট্রিগার দিন, আর মনে রাখুন YAML দুই স্পেসে নেস্ট করে—কখনো ট্যাব নয়।',
+    'Actions automates testing and deployment for free on public repos, but YAML is whitespace-sensitive and easy to misindent.', 'অ্যাকশন পাবলিক রিপোতে টেস্ট ও ডিপ্লয় বিনামূল্যে অটোমেট করে, তবে YAML হোয়াইটস্পেস-সংবেদনশীল ও সহজে ভুল ইনডেন্ট হয়।',
+    'Indenting a workflow with tabs or inconsistent spaces, so the whole file silently fails to run.', 'ট্যাব বা অসামঞ্জস্য স্পেসে ওয়ার্কফ্লো ইনডেন্ট করা, ফলে পুরো ফাইল নীরবে চলে না।'],
+  ['git-workflow-anatomy', 'git-automation', 'Anatomy of a workflow', 'ওয়ার্কফ্লোর গঠন', 'Intermediate', 16, 'algo-flow',
+    'A workflow has a name, on triggers, and jobs; each job runs on a runner and contains ordered steps that use actions or run commands.', 'একটি ওয়ার্কফ্লোতে থাকে name, on ট্রিগার, ও jobs; প্রতিটি job একটি রানারে চলে ও ক্রমিক step ধারণ করে যা অ্যাকশন uses বা কমান্ড run করে।',
+    'A recipe card: when to cook (on), the stations (jobs), and the numbered steps at each station.', 'একটি রেসিপি কার্ড: কখন রাঁধবেন (on), স্টেশন (jobs), ও প্রতিটি স্টেশনের নম্বরযুক্ত ধাপ (steps)।',
+    'Start each job with actions/checkout, set runs-on: ubuntu-latest, and list steps with either uses: or run:.', 'প্রতিটি job actions/checkout দিয়ে শুরু করুন, runs-on: ubuntu-latest দিন, ও uses: বা run: দিয়ে step তালিকা করুন।',
+    'Jobs run in parallel by default for speed, but if one depends on another you must wire it with needs:.', 'গতির জন্য job ডিফল্টে সমান্তরালে চলে, তবে একটি অন্যটির ওপর নির্ভর করলে needs: দিয়ে যুক্ত করতে হয়।',
+    'Forgetting the checkout step, so the job runs against an empty workspace with none of your code.', 'checkout ধাপ ভুলে যাওয়া, ফলে job আপনার কোড ছাড়া একটি খালি ওয়ার্কস্পেসে চলে।'],
+  ['git-ci-pipeline', 'git-automation', 'Build a CI pipeline', 'একটি CI পাইপলাইন', 'Advanced', 18, 'git-flow',
+    'A continuous integration pipeline automatically installs dependencies, lints, tests, and builds your code on every push and pull request.', 'একটি কন্টিনিউয়াস ইন্টিগ্রেশন পাইপলাইন প্রতি পুশ ও পুল রিকোয়েস্টে স্বয়ংক্রিয়ভাবে ডিপেন্ডেন্সি ইনস্টল, লিন্ট, টেস্ট ও বিল্ড করে।',
+    'An assembly-line inspector that checks every change before it is allowed onto the main track.', 'একটি অ্যাসেম্বলি-লাইন পরিদর্শক যা প্রতিটি পরিবর্তন মূল ট্র্যাকে ওঠার আগে যাচাই করে।',
+    'Use a matrix to test several Node versions, cache dependencies with actions/setup-node, and run npm ci, lint, test, build.', 'কয়েকটি Node ভার্সন টেস্ট করতে matrix নিন, actions/setup-node দিয়ে ডিপেন্ডেন্সি ক্যাশ করুন, ও npm ci, lint, test, build চালান।',
+    'CI catches breakage early and enforces quality, but slow or flaky pipelines frustrate developers and get ignored.', 'CI আগেভাগে ভাঙন ধরে ও মান রক্ষা করে, তবে ধীর বা ফ্লেকি পাইপলাইন ডেভেলপারদের বিরক্ত করে ও উপেক্ষিত হয়।',
+    'Running npm install instead of npm ci in CI, so builds are non-reproducible and lockfile drift slips through.', 'CI-তে npm ci-এর বদলে npm install চালানো, ফলে বিল্ড পুনরুৎপাদনযোগ্য নয় ও লকফাইল ড্রিফট গলে যায়।'],
+  ['git-secrets-deploy', 'git-automation', 'Secrets, artifacts & deploy', 'সিক্রেট, আর্টিফ্যাক্ট ও ডিপ্লয়', 'Advanced', 16, 'git-flow',
+    'Secrets store credentials encrypted; jobs read them via the secrets context, and steps pass data through special $GITHUB_OUTPUT files.', 'সিক্রেট ক্রেডেনশিয়াল এনক্রিপ্টেড রাখে; job সেগুলো secrets কনটেক্সট দিয়ে পড়ে, ও step বিশেষ $GITHUB_OUTPUT ফাইল দিয়ে ডেটা পাঠায়।',
+    'A sealed envelope the workflow can use but never read aloud—and a shared clipboard between steps.', 'একটি সিলড খাম যা ওয়ার্কফ্লো ব্যবহার করতে পারে কিন্তু জোরে পড়ে না—আর step-দের মধ্যে একটি শেয়ার্ড ক্লিপবোর্ড।',
+    'Grant least-privilege permissions, pass secrets only through env values, and deploy from a job gated by an environment.', 'least-privilege permission দিন, সিক্রেট শুধু env মান দিয়ে পাঠান, ও একটি environment দিয়ে গেট করা job থেকে ডিপ্লয় করুন।',
+    'Environments add approval gates and protect production, but over-broad permissions or leaked secrets are a serious security risk.', 'environment অনুমোদন গেট যোগ করে ও প্রোডাকশন রক্ষা করে, তবে অতি-প্রশস্ত permission বা ফাঁস হওয়া সিক্রেট গুরুতর নিরাপত্তা ঝুঁকি।',
+    'Printing a secret with echo in a step, exposing it in the public build logs forever.', 'একটি step-এ echo দিয়ে সিক্রেট প্রিন্ট করা, তা চিরকালের জন্য পাবলিক বিল্ড লগে ফাঁস করা।'],
+  ['git-dependabot-conventions', 'git-automation', 'Dependabot & commit conventions', 'Dependabot ও কমিট কনভেনশন', 'Intermediate', 13, 'algo-flow',
+    'Dependabot (.github/dependabot.yml) opens automated dependency-update PRs; Conventional Commits give messages a structured, machine-readable format.', 'Dependabot (.github/dependabot.yml) স্বয়ংক্রিয় ডিপেন্ডেন্সি-আপডেট PR খোলে; Conventional Commits মেসেজকে কাঠামোবদ্ধ, মেশিন-পাঠযোগ্য ফরম্যাট দেয়।',
+    'Dependabot is a subscription that mails you upgrade suggestions; conventional commits are a filing system with labelled folders.', 'Dependabot হলো একটি সাবস্ক্রিপশন যা আপগ্রেড পরামর্শ পাঠায়; কনভেনশনাল কমিট হলো লেবেলযুক্ত ফোল্ডারের ফাইলিং সিস্টেম।',
+    'Add a dependabot.yml with package-ecosystem and a weekly schedule, and write commits as feat:, fix:, docs:, chore:.', 'package-ecosystem ও সাপ্তাহিক schedule সহ একটি dependabot.yml যোগ করুন, ও কমিট লিখুন feat:, fix:, docs:, chore: হিসেবে।',
+    'These conventions enable automated changelogs and version bumps, but they only pay off if the whole team follows them consistently.', 'এই কনভেনশন স্বয়ংক্রিয় চেঞ্জলগ ও ভার্সন বাম্প সম্ভব করে, তবে পুরো টিম ধারাবাহিকভাবে মানলে তবেই ফল দেয়।',
+    'Ignoring Dependabot PRs for months, letting security patches and easy upgrades pile into a risky backlog.', 'মাসের পর মাস Dependabot PR উপেক্ষা করা, নিরাপত্তা প্যাচ ও সহজ আপগ্রেড ঝুঁকিপূর্ণ ব্যাকলগে জমতে দেওয়া।'],
+]
+
+// Command reference tables shown as an extra lesson section (op = intent, value = command).
+const commands = {
+  'git-install-config': [['Set your name', 'নাম সেট করুন', 'git config --global user.name "…"'], ['Set your email', 'ইমেইল সেট করুন', 'git config --global user.email "…"'], ['Default branch name', 'ডিফল্ট ব্রাঞ্চ নাম', 'git config --global init.defaultBranch main'], ['List all settings', 'সব সেটিং দেখুন', 'git config --list --show-origin']],
+  'git-three-areas': [['Stage a file', 'ফাইল স্টেজ করুন', 'git add <file>'], ['Unstage a file', 'ফাইল আনস্টেজ করুন', 'git restore --staged <file>'], ['See the three states', 'তিন অবস্থা দেখুন', 'git status']],
+  'git-init-clone': [['New repo here', 'এখানে নতুন রিপো', 'git init'], ['Clone a remote', 'রিমোট ক্লোন', 'git clone <url>'], ['Shallow clone', 'শ্যালো ক্লোন', 'git clone --depth 1 <url>'], ['Clone one branch', 'এক ব্রাঞ্চ ক্লোন', 'git clone -b dev --single-branch <url>']],
+  'git-staging-commit': [['Stage everything', 'সব স্টেজ', 'git add -A'], ['Stage interactively', 'ইন্টারেক্টিভ স্টেজ', 'git add -p'], ['Commit staged', 'স্টেজড কমিট', 'git commit -m "message"'], ['Amend last commit', 'শেষ কমিট সংশোধন', 'git commit --amend']],
+  'git-status-diff': [['Short status', 'সংক্ষিপ্ত স্ট্যাটাস', 'git status -sb'], ['Unstaged changes', 'আনস্টেজড পরিবর্তন', 'git diff'], ['Staged changes', 'স্টেজড পরিবর্তন', 'git diff --staged'], ['Summary only', 'শুধু সারাংশ', 'git diff --stat']],
+  'git-gitignore': [['Ignore a folder', 'ফোল্ডার ইগনোর', 'node_modules/'], ['Ignore by extension', 'এক্সটেনশনে ইগনোর', '*.log'], ['Re-include a file', 'ফাইল আবার যোগ', '!keep.log'], ['Untrack a tracked file', 'ট্র্যাকড ফাইল আনট্র্যাক', 'git rm --cached <file>']],
+  'git-history': [['Compact graph', 'সংক্ষিপ্ত গ্রাফ', 'git log --oneline --graph --all'], ['One file’s history', 'এক ফাইলের ইতিহাস', 'git log -p <file>'], ['Inspect a commit', 'কমিট দেখুন', 'git show <sha>'], ['Who changed a line', 'কে লাইন বদলেছে', 'git blame <file>']],
+  'git-branches': [['List branches', 'ব্রাঞ্চ তালিকা', 'git branch'], ['Create & switch', 'বানিয়ে সুইচ', 'git switch -c <name>'], ['Switch branch', 'ব্রাঞ্চ সুইচ', 'git switch <name>'], ['Delete merged branch', 'মার্জড ব্রাঞ্চ ডিলিট', 'git branch -d <name>']],
+  'git-merge': [['Merge a branch', 'ব্রাঞ্চ মার্জ', 'git merge <branch>'], ['Force a merge commit', 'মার্জ কমিট বাধ্য', 'git merge --no-ff <branch>'], ['Abort a conflicted merge', 'কনফ্লিক্ট মার্জ বাতিল', 'git merge --abort'], ['Mark conflict resolved', 'কনফ্লিক্ট সমাধান চিহ্নিত', 'git add <file>']],
+  'git-rebase': [['Rebase onto main', 'main-এ রিবেস', 'git rebase main'], ['Continue after a fix', 'ফিক্সের পর চালিয়ে যান', 'git rebase --continue'], ['Abort a rebase', 'রিবেস বাতিল', 'git rebase --abort'], ['Update with rebase', 'রিবেস দিয়ে আপডেট', 'git pull --rebase']],
+  'git-tags': [['Annotated tag', 'অ্যানোটেটেড ট্যাগ', 'git tag -a v1.0.0 -m "…"'], ['List tags', 'ট্যাগ তালিকা', 'git tag'], ['Push one tag', 'এক ট্যাগ পুশ', 'git push origin v1.0.0'], ['Push commits + tags', 'কমিট + ট্যাগ পুশ', 'git push --follow-tags']],
+  'git-remotes': [['List remotes', 'রিমোট তালিকা', 'git remote -v'], ['Add a remote', 'রিমোট যোগ', 'git remote add origin <url>'], ['Change a remote URL', 'রিমোট URL বদলান', 'git remote set-url origin <url>'], ['Add upstream', 'upstream যোগ', 'git remote add upstream <url>']],
+  'git-push-pull': [['Download only', 'শুধু ডাউনলোড', 'git fetch --prune'], ['Fetch + integrate', 'ফেচ + যুক্ত', 'git pull --rebase'], ['First push', 'প্রথম পুশ', 'git push -u origin <branch>'], ['Safe force push', 'নিরাপদ ফোর্স পুশ', 'git push --force-with-lease']],
+  'git-auth': [['Create an SSH key', 'SSH কী বানান', 'ssh-keygen -t ed25519 -C "email"'], ['Test SSH', 'SSH পরীক্ষা', 'ssh -T git@github.com'], ['Login via CLI', 'CLI দিয়ে লগইন', 'gh auth login']],
+  'git-pull-requests': [['Open a PR', 'PR খুলুন', 'gh pr create --fill'], ['Check out a PR', 'PR চেকআউট', 'gh pr checkout <number>'], ['Merge (squash)', 'মার্জ (স্কোয়াশ)', 'gh pr merge --squash --delete-branch'], ['Link an issue', 'ইস্যু যুক্ত', 'Closes #12 (in PR body)']],
+  'git-forks': [['Fork + clone', 'ফর্ক + ক্লোন', 'gh repo fork owner/repo --clone'], ['Add upstream', 'upstream যোগ', 'git remote add upstream <url>'], ['Sync from upstream', 'upstream থেকে সিংক', 'git fetch upstream && git merge upstream/main']],
+  'git-restore': [['Discard file changes', 'ফাইল পরিবর্তন বাতিল', 'git restore <file>'], ['Unstage a file', 'ফাইল আনস্টেজ', 'git restore --staged <file>'], ['Restore from a commit', 'কমিট থেকে রিস্টোর', 'git restore --source=<sha> <file>']],
+  'git-reset': [['Undo commit, keep staged', 'কমিট আনডু, স্টেজড রাখুন', 'git reset --soft HEAD~1'], ['Undo commit, unstage', 'কমিট আনডু, আনস্টেজ', 'git reset HEAD~1'], ['Discard commit + changes', 'কমিট + পরিবর্তন বাতিল', 'git reset --hard HEAD~1'], ['Match the remote', 'রিমোটের সঙ্গে মেলান', 'git reset --hard origin/main']],
+  'git-revert': [['Revert a commit', 'কমিট রিভার্ট', 'git revert <sha>'], ['Stage the undo only', 'শুধু আনডু স্টেজ', 'git revert --no-commit <sha>']],
+  'git-stash': [['Shelve changes', 'পরিবর্তন শেলভ', 'git stash push -m "note"'], ['Include untracked', 'আনট্র্যাকড সহ', 'git stash -u'], ['List stashes', 'স্ট্যাশ তালিকা', 'git stash list'], ['Reapply latest', 'সর্বশেষ ফেরান', 'git stash pop']],
+  'git-reflog': [['Show HEAD history', 'HEAD ইতিহাস', 'git reflog'], ['Jump back to a point', 'একটি বিন্দুতে ফিরুন', 'git reset --hard HEAD@{n}']],
+  'git-interactive-rebase': [['Edit the last n commits', 'শেষ n কমিট এডিট', 'git rebase -i HEAD~n'], ['Auto-squash fixups', 'ফিক্সআপ অটো-স্কোয়াশ', 'git rebase -i --autosquash main'], ['Make a fixup commit', 'ফিক্সআপ কমিট', 'git commit --fixup=<sha>']],
+  'git-cherry-pick': [['Copy one commit', 'এক কমিট কপি', 'git cherry-pick <sha>'], ['Start a bug hunt', 'বাগ খোঁজা শুরু', 'git bisect start'], ['Mark good / bad', 'ভালো / খারাপ চিহ্নিত', 'git bisect good <sha> / bad'], ['Automate the hunt', 'খোঁজা অটোমেট', 'git bisect run npm test']],
+  'git-hooks-signing': [['Hooks live here', 'হুক এখানে থাকে', '.git/hooks/'], ['Set a shared hooks path', 'শেয়ার্ড হুক পাথ', 'git config core.hooksPath .githooks'], ['Sign every commit', 'প্রতি কমিট সাইন', 'git config --global commit.gpgsign true'], ['Sign one commit', 'এক কমিট সাইন', 'git commit -S']],
+  'git-submodules-worktree': [['Add a submodule', 'সাবমডিউল যোগ', 'git submodule add <url> <path>'], ['Clone with submodules', 'সাবমডিউলসহ ক্লোন', 'git clone --recurse-submodules <url>'], ['Init existing submodules', 'বিদ্যমান সাবমডিউল init', 'git submodule update --init --recursive'], ['Add a worktree', 'ওয়ার্কট্রি যোগ', 'git worktree add ../hotfix main']],
+  'git-actions-intro': [['Workflows folder', 'ওয়ার্কফ্লো ফোল্ডার', '.github/workflows/'], ['Trigger key', 'ট্রিগার কী', 'on: [push, pull_request]'], ['Manual run button', 'ম্যানুয়াল রান বোতাম', 'on: workflow_dispatch'], ['Scheduled run', 'শিডিউলড রান', "schedule: - cron: '0 6 * * 1'"]],
+  'git-workflow-anatomy': [['Choose a runner', 'রানার বাছুন', 'runs-on: ubuntu-latest'], ['Check out code', 'কোড চেকআউট', 'uses: actions/checkout@v4'], ['Run a command', 'কমান্ড চালান', 'run: npm test'], ['Depend on a job', 'job নির্ভরতা', 'needs: build']],
+  'git-ci-pipeline': [['Set up Node + cache', 'Node + ক্যাশ', 'uses: actions/setup-node@v4'], ['Reproducible install', 'পুনরুৎপাদনযোগ্য ইনস্টল', 'run: npm ci'], ['Test many versions', 'বহু ভার্সন টেস্ট', 'strategy: matrix'], ['Upload a report', 'রিপোর্ট আপলোড', 'uses: actions/upload-artifact@v4']],
+  'git-secrets-deploy': [['Read a secret', 'সিক্রেট পড়ুন', 'secrets.TOKEN'], ['Limit token scope', 'টোকেন স্কোপ সীমিত', 'permissions: contents: read'], ['Pass data between steps', 'step-এ ডেটা পাঠান', 'echo "k=v" >> "$GITHUB_OUTPUT"'], ['Gate on environment', 'environment গেট', 'environment: production']],
+  'git-dependabot-conventions': [['Dependabot config', 'Dependabot কনফিগ', '.github/dependabot.yml'], ['Update ecosystem', 'ইকোসিস্টেম আপডেট', 'package-ecosystem: npm'], ['Feature commit', 'ফিচার কমিট', 'feat(scope): message'], ['Fix commit', 'ফিক্স কমিট', 'fix(scope): message']],
+}
+
+// Git-flavoured distractors for generated exams (each is a clearly bad practice).
+const distractors = [
+  l('Force-push to shared branches whenever the history looks messy.', 'ইতিহাস অগোছালো দেখালেই শেয়ার্ড ব্রাঞ্চে ফোর্স-পুশ করুন।'),
+  l('Commit everything—including secrets and node_modules—in one giant commit.', 'সিক্রেট ও node_modules সহ সবকিছু এক বিশাল কমিটে দিন।'),
+  l('Skip commit messages and never record what changed or why.', 'কমিট মেসেজ বাদ দিন, কী ও কেন বদলালো কখনো লিখবেন না।'),
+]
+
+function makeExam(topic) {
+  const correct = {
+    purpose: l(topic.insight.en, topic.insight.bn),
+    action: l(topic.action.en, topic.action.bn),
+    tradeoff: l(topic.tradeoff.en, topic.tradeoff.bn),
+    mistake: l(topic.mistake.en, topic.mistake.bn),
+  }
+  const optionSet = (answer, offset = 0) => {
+    const answerIndex = offset % 4
+    const values = [...distractors]
+    values.splice(answerIndex, 0, answer)
+    return {
+      options: values.map((text, index) => ({ id: String.fromCharCode(97 + index), text })),
+      correct: [String.fromCharCode(97 + answerIndex)],
+    }
+  }
+  const purpose = optionSet(correct.purpose, topic.order)
+  const action = optionSet(correct.action, topic.order + 1)
+  const mistake = optionSet(correct.mistake, topic.order + 2)
+  const interview = optionSet(l(`Name the command, say what it changes, and state this trade-off: ${topic.tradeoff.en}`, `কমান্ডের নাম বলুন, কী বদলায় বলুন, এবং এই ট্রেড-অফ বলুন: ${topic.tradeoff.bn}`), topic.order + 3)
+
+  return [
+    { id: 'q1', type: 'single', concept: topic.title, prompt: l(`What is the central idea of ${topic.title.en}?`, `${topic.title.bn}-এর মূল ধারণা কী?`), ...purpose, explanation: correct.purpose },
+    { id: 'q2', type: 'single', concept: topic.title, prompt: l('Which approach is the strongest habit here?', 'এখানে কোন পদ্ধতিটি সবচেয়ে ভালো অভ্যাস?'), ...action, explanation: correct.action },
+    { id: 'q3', type: 'multi', concept: topic.title, prompt: l('Select both statements that show sound Git practice.', 'সঠিক গিট চর্চা দেখায়—এমন দুটি বক্তব্য বাছুন।'), options: [
+      { id: 'a', text: correct.purpose }, { id: 'b', text: distractors[0] }, { id: 'c', text: correct.tradeoff }, { id: 'd', text: distractors[1] },
+    ], correct: ['a', 'c'], explanation: l(`A sound answer states both the mechanism and its trade-off: ${topic.tradeoff.en}`, `সঠিক উত্তরে প্রক্রিয়া ও ট্রেড-অফ দুটিই থাকে: ${topic.tradeoff.bn}`) },
+    { id: 'q4', type: 'single', concept: topic.title, prompt: l('Which choice is a common mistake?', 'কোনটি সাধারণ ভুল?'), ...mistake, explanation: l(`Avoid this mistake: ${topic.mistake.en}`, `এই ভুল এড়িয়ে চলুন: ${topic.mistake.bn}`) },
+    { id: 'q5', type: 'single', concept: topic.title, prompt: l('What should a strong interview answer include?', 'একটি ভালো ইন্টারভিউ উত্তরে কী থাকা উচিত?'), ...interview, explanation: l('Interviewers value a named command, what it actually changes, and an explicit trade-off over memorized syntax.', 'ইন্টারভিউয়ার মুখস্থ সিনট্যাক্সের চেয়ে বলা কমান্ড, তা আসলে কী বদলায়, ও স্পষ্ট ট্রেড-অফকে বেশি মূল্য দেন।') },
+  ]
+}
+
+export const gitTopics = rawTopics.map((row, index) => {
+  const [id, moduleId, en, bn, difficulty, minutes, diagram, insightEn, insightBn, analogyEn, analogyBn, actionEn, actionBn, tradeoffEn, tradeoffBn, mistakeEn, mistakeBn] = row
+  const topic = {
+    id, order: index + 1, moduleId, title: l(en, bn), difficulty, minutes, diagram, deepDive: null,
+    insight: l(insightEn, insightBn), analogy: l(analogyEn, analogyBn), action: l(actionEn, actionBn), tradeoff: l(tradeoffEn, tradeoffBn), mistake: l(mistakeEn, mistakeBn),
+    complexity: (commands[id] || []).map(([opEn, opBn, value]) => ({ op: l(opEn, opBn), value })),
+    objectives: [
+      l(`Explain ${en} in plain language.`, `সহজ ভাষায় ${bn} ব্যাখ্যা করতে পারবেন।`),
+      l('Recognize when to reach for it in a real Git workflow.', 'বাস্তব গিট ওয়ার্কফ্লোতে কখন এটি নিতে হবে তা বুঝতে পারবেন।'),
+      l('Run the key commands and know what each flag does.', 'মূল কমান্ডগুলো চালাতে ও প্রতিটি ফ্ল্যাগ কী করে তা জানতে পারবেন।'),
+    ],
+    advantages: l(`Used well, ${en.toLowerCase()} keeps your history clean and your changes easy to share and undo.`, `ভালোভাবে ব্যবহার করলে ${bn} আপনার ইতিহাস পরিষ্কার রাখে এবং পরিবর্তন শেয়ার ও আনডু করা সহজ করে।`),
+    interview: l(`Name the command for ${en.toLowerCase()}, explain what it changes, and justify it against one alternative.`, `${bn}-এর কমান্ড বলুন, কী বদলায় ব্যাখ্যা করুন, এবং একটি বিকল্পের সঙ্গে যুক্তি দিন।`),
+    glossary: [
+      { term: l('Commit', 'কমিট'), definition: l('A saved snapshot of your project with a unique hash and message.', 'একটি ইউনিক হ্যাশ ও মেসেজসহ প্রকল্পের সংরক্ষিত স্ন্যাপশট।') },
+      { term: l('Branch', 'ব্রাঞ্চ'), definition: l('A movable pointer to a commit, used to develop work in isolation.', 'একটি কমিটের দিকে সরানো-যোগ্য পয়েন্টার, আলাদাভাবে কাজ করতে ব্যবহৃত।') },
+    ],
+  }
+  topic.exam = makeExam(topic).map((question) => ({ ...question, concept: topic.title }))
+  return topic
+})
+
+// ── Guided labs (bilingual) ─────────────────────────────────────────────────
+export const gitLabs = [
+  {
+    id: 'git-undo-lab', icon: '⟲', title: l('Recover from a Mistake', 'ভুল থেকে পুনরুদ্ধার ল্যাব'), subtitle: l('Pick the safe command for each "oh no" moment.', 'প্রতিটি "সর্বনাশ" মুহূর্তে নিরাপদ কমান্ড বাছুন।'),
+    stages: [
+      ['Discard edits', 'এডিট বাতিল', 'You edited a file but want the last committed version back. What do you run?', 'একটি ফাইল এডিট করেছেন কিন্তু শেষ কমিট করা সংস্করণ ফেরত চান। কী চালাবেন?', ['git restore <file>', 'git commit -m "revert"'], ['git restore <file>', 'git commit -m "revert"'], 0, 'restore throws away uncommitted edits and brings back the committed version.', 'restore আনকমিটেড এডিট ফেলে দেয় ও কমিট করা সংস্করণ ফিরিয়ে আনে।'],
+      ['Unstage', 'আনস্টেজ', 'You ran git add by mistake. Undo staging without losing your edits?', 'ভুলে git add চালিয়েছেন। এডিট না হারিয়ে স্টেজিং আনডু করবেন কীভাবে?', ['git restore --staged <file>', 'git reset --hard'], ['git restore --staged <file>', 'git reset --hard'], 0, '--staged unstages the file but keeps your working changes intact.', '--staged ফাইল আনস্টেজ করে কিন্তু ওয়ার্কিং পরিবর্তন অক্ষত রাখে।'],
+      ['Undo a local commit', 'লোকাল কমিট আনডু', 'You committed too early and want the changes back as staged. Which command?', 'খুব আগে কমিট করেছেন ও পরিবর্তন স্টেজড হিসেবে ফেরত চান। কোন কমান্ড?', ['git reset --soft HEAD~1', 'git push --force'], ['git reset --soft HEAD~1', 'git push --force'], 0, '--soft moves HEAD back but keeps everything staged for a fresh commit.', '--soft HEAD পিছিয়ে দেয় কিন্তু নতুন কমিটের জন্য সব স্টেজড রাখে।'],
+      ['Undo a pushed commit', 'পুশ করা কমিট আনডু', 'A bad commit is already on the shared main branch. What is safe?', 'একটি খারাপ কমিট ইতিমধ্যে শেয়ার্ড main-এ। কোনটি নিরাপদ?', ['git revert <sha>', 'git reset --hard HEAD~1'], ['git revert <sha>', 'git reset --hard HEAD~1'], 0, 'revert adds an inverse commit—safe because it never rewrites shared history.', 'revert একটি বিপরীত কমিট যোগ করে—নিরাপদ কারণ শেয়ার্ড ইতিহাস বদলায় না।'],
+      ['Lost after a reset', 'reset-এর পর হারানো', 'A bad git reset seems to have erased your commits. First move?', 'একটি খারাপ git reset আপনার কমিট মুছে ফেলেছে মনে হচ্ছে। প্রথম পদক্ষেপ?', ['git reflog, then reset to it', 'Re-clone the repository'], ['git reflog, তারপর সেখানে reset', 'রিপোজিটরি আবার ক্লোন'], 0, 'reflog lists recent HEAD positions so you can reset straight back to the lost commit.', 'reflog সাম্প্রতিক HEAD অবস্থান দেখায়, তাই সরাসরি হারানো কমিটে reset করা যায়।'],
+    ],
+  },
+  {
+    id: 'git-flow-lab', icon: '⎇', title: l('Ship a Feature', 'ফিচার শিপ ল্যাব'), subtitle: l('Walk the GitHub Flow from branch to merge.', 'ব্রাঞ্চ থেকে মার্জ পর্যন্ত GitHub Flow অনুসরণ করুন।'),
+    stages: [
+      ['Start work', 'কাজ শুরু', 'You are beginning a new feature. What is the first step?', 'একটি নতুন ফিচার শুরু করছেন। প্রথম ধাপ কী?', ['Create a branch off main', 'Commit straight to main'], ['main থেকে একটি ব্রাঞ্চ বানান', 'সরাসরি main-এ কমিট'], 0, 'A feature branch keeps main stable while you work.', 'ফিচার ব্রাঞ্চ কাজের সময় main স্থিতিশীল রাখে।'],
+      ['Publish', 'প্রকাশ', 'Your branch is ready to share for review. What next?', 'আপনার ব্রাঞ্চ রিভিউর জন্য শেয়ার করতে প্রস্তুত। এরপর কী?', ['Push and open a pull request', 'Email a zip of the files'], ['পুশ করে পুল রিকোয়েস্ট খুলুন', 'ফাইলের zip ইমেইল করুন'], 0, 'A PR shows the diff and runs checks before anything merges.', 'PR মার্জের আগে diff দেখায় ও চেক চালায়।'],
+      ['Handle review', 'রিভিউ সামলান', 'A reviewer requests changes on your open PR. What do you do?', 'একজন রিভিউয়ার আপনার খোলা PR-এ পরিবর্তন চান। কী করবেন?', ['Push new commits to the same branch', 'Open a brand-new PR'], ['একই ব্রাঞ্চে নতুন কমিট পুশ করুন', 'একদম নতুন PR খুলুন'], 0, 'New commits on the branch update the same PR automatically.', 'ব্রাঞ্চে নতুন কমিট একই PR স্বয়ংক্রিয়ভাবে আপডেট করে।'],
+      ['Merge', 'মার্জ', 'The team wants one tidy commit on main. Which merge method?', 'টিম main-এ একটি পরিপাটি কমিট চায়। কোন মার্জ পদ্ধতি?', ['Squash and merge', 'Force-push over main'], ['স্কোয়াশ ও মার্জ', 'main-এর ওপর ফোর্স-পুশ'], 0, 'Squash merge collapses the PR into a single clean commit.', 'স্কোয়াশ মার্জ PR-কে একটি পরিষ্কার কমিটে মেলায়।'],
+      ['Clean up', 'পরিষ্কার', 'The feature is merged. What happens to the branch now?', 'ফিচার মার্জ হয়েছে। এখন ব্রাঞ্চের কী হবে?', ['Delete it', 'Keep it forever'], ['ডিলিট করুন', 'চিরকাল রাখুন'], 0, 'Deleting merged branches keeps the branch list clean.', 'মার্জড ব্রাঞ্চ ডিলিট করলে ব্রাঞ্চ তালিকা পরিষ্কার থাকে।'],
+    ],
+  },
+  {
+    id: 'git-integrate-lab', icon: '⧉', title: l('Integrate Safely', 'নিরাপদে ইন্টিগ্রেট ল্যাব'), subtitle: l('Choose the right way to combine and publish work.', 'কাজ মেলানো ও প্রকাশের সঠিক উপায় বাছুন।'),
+    stages: [
+      ['Update a private branch', 'প্রাইভেট ব্রাঞ্চ আপডেট', 'Your un-pushed feature branch is behind main. Cleanest update?', 'আপনার আন-পুশড ফিচার ব্রাঞ্চ main-এর পিছনে। সবচেয়ে পরিষ্কার আপডেট?', ['git rebase main', 'Merge main into it again and again'], ['git rebase main', 'বারবার main একে মার্জ করা'], 0, 'Rebasing a private branch gives a clean, linear history.', 'প্রাইভেট ব্রাঞ্চ রিবেস করলে পরিষ্কার লিনিয়ার ইতিহাস মেলে।'],
+      ['Resolve a conflict', 'কনফ্লিক্ট সমাধান', 'A merge stops with conflict markers in a file. What do you do?', 'একটি মার্জ ফাইলে কনফ্লিক্ট মার্কার রেখে থেমে যায়। কী করবেন?', ['Edit the markers, git add, then commit', 'Delete the whole file'], ['মার্কার এডিট করে git add, তারপর কমিট', 'পুরো ফাইল ডিলিট'], 0, 'Resolve by keeping the correct lines, staging, and committing.', 'সঠিক লাইন রেখে স্টেজ ও কমিট করে সমাধান করুন।'],
+      ['Undo on a shared branch', 'শেয়ার্ড ব্রাঞ্চে আনডু', 'A pushed commit on main must be undone. Which is safe?', 'main-এ পুশ করা একটি কমিট আনডু করতে হবে। কোনটি নিরাপদ?', ['git revert <sha>', 'git reset --hard then force-push'], ['git revert <sha>', 'git reset --hard তারপর ফোর্স-পুশ'], 0, 'revert is safe on shared history; reset + force-push breaks teammates.', 'revert শেয়ার্ড ইতিহাসে নিরাপদ; reset + ফোর্স-পুশ টিমমেটদের ভাঙে।'],
+      ['Publish a rewrite', 'রিরাইট প্রকাশ', 'You rebased your own branch and must update the remote. How?', 'নিজের ব্রাঞ্চ রিবেস করেছেন ও রিমোট আপডেট করতে হবে। কীভাবে?', ['git push --force-with-lease', 'git push --force'], ['git push --force-with-lease', 'git push --force'], 0, '--force-with-lease refuses if someone else pushed, protecting their work.', 'অন্য কেউ পুশ করলে --force-with-lease থামে, তাদের কাজ রক্ষা করে।'],
+    ],
+  },
+  {
+    id: 'git-actions-lab', icon: '⚙', title: l('Write a CI Workflow', 'CI ওয়ার্কফ্লো ল্যাব'), subtitle: l('Make the right calls building a GitHub Actions pipeline.', 'একটি GitHub Actions পাইপলাইন বানাতে সঠিক সিদ্ধান্ত নিন।'),
+    stages: [
+      ['File location', 'ফাইলের অবস্থান', 'Where must a workflow file live to run automatically?', 'স্বয়ংক্রিয়ভাবে চলতে ওয়ার্কফ্লো ফাইল কোথায় থাকতে হবে?', ['.github/workflows/ci.yml', 'ci.yml in the repo root'], ['.github/workflows/ci.yml', 'রিপো রুটে ci.yml'], 0, 'Actions only picks up YAML inside .github/workflows/.', 'Actions শুধু .github/workflows/-এর YAML নেয়।'],
+      ['First step', 'প্রথম ধাপ', 'What should almost every job do first?', 'প্রায় প্রতিটি job-এর প্রথমে কী করা উচিত?', ['Check out the code (actions/checkout)', 'Run npm publish'], ['কোড চেকআউট (actions/checkout)', 'npm publish চালান'], 0, 'Without checkout the runner has none of your code.', 'checkout ছাড়া রানারে আপনার কোড থাকে না।'],
+      ['Install deps', 'ডিপেন্ডেন্সি ইনস্টল', 'Which install command belongs in CI for reproducible builds?', 'পুনরুৎপাদনযোগ্য বিল্ডের জন্য CI-তে কোন ইনস্টল কমান্ড?', ['npm ci', 'npm install'], ['npm ci', 'npm install'], 0, 'npm ci installs exactly from the lockfile—reproducible every run.', 'npm ci ঠিক লকফাইল থেকে ইনস্টল করে—প্রতিবার পুনরুৎপাদনযোগ্য।'],
+      ['Store a token', 'টোকেন রাখা', 'A deploy step needs an API token. Where do you keep it?', 'একটি ডিপ্লয় step-এ API টোকেন লাগে। কোথায় রাখবেন?', ['A repository/environment secret', 'Hard-coded in the YAML'], ['রিপোজিটরি/environment সিক্রেট', 'YAML-এ হার্ড-কোড'], 0, 'Secrets are encrypted and masked; hard-coding leaks them in logs and history.', 'সিক্রেট এনক্রিপ্টেড ও মাস্কড; হার্ড-কোড লগ ও ইতিহাসে ফাঁস করে।'],
+      ['Limit permissions', 'permission সীমিত', 'How should you scope the workflow’s GITHUB_TOKEN?', 'ওয়ার্কফ্লোর GITHUB_TOKEN কীভাবে স্কোপ করবেন?', ['Least privilege (e.g. contents: read)', 'Full admin everywhere'], ['least privilege (যেমন contents: read)', 'সর্বত্র পূর্ণ অ্যাডমিন'], 0, 'Least-privilege permissions limit the blast radius if a step is compromised.', 'least-privilege permission কোনো step আপস হলে ক্ষতির পরিধি সীমিত রাখে।'],
+    ],
+  },
+].map((lab) => ({ ...lab, stages: lab.stages.map((s, i) => ({ id: `${lab.id}-${i}`, title: l(s[0], s[1]), question: l(s[2], s[3]), options: s[4].map((en, x) => l(en, s[5][x])), correct: s[6], feedback: l(s[7], s[8]) })) }))

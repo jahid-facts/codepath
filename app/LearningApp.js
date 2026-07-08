@@ -537,7 +537,7 @@ function Lesson({ topicId, progress, setProgress, lang, openTopic, navigate }) {
         <LessonSection number="03" label={lang === 'bn' ? 'মূল ধারণা' : 'Core idea'}><p className="lead-paragraph">{text(topic.insight)}</p><div className="principle-card"><strong>{lang === 'bn' ? 'মূল নীতি' : 'Design principle'}</strong><p>{text(topic.action)}</p></div></LessonSection>
         <LessonSection number="04" label={course.id === 'system-design' ? (lang === 'bn' ? 'ভিজ্যুয়াল ফ্লো' : 'Visual request flow') : (lang === 'bn' ? 'ভিজ্যুয়াল ব্যাখ্যা' : 'Visual walkthrough')}><CourseDiagram kind={topic.diagram} courseId={course.id} lang={lang} title={topic.title} /></LessonSection>
         <LessonSection number="05" label={course.id === 'system-design' ? (lang === 'bn' ? 'অনুরোধের পথ' : 'Walk through the flow') : (lang === 'bn' ? 'ধাপে ধাপে' : 'Step by step')}><ol className="flow-steps"><li><b>1</b><span>{text(topic.insight)}</span></li><li><b>2</b><span>{text(topic.action)}</span></li><li><b>3</b><span>{course.id === 'system-design' ? (lang === 'bn' ? 'সিস্টেম ফল দেয় এবং লেটেন্সি, এরর ও ক্ষমতা পরিমাপ করে।' : 'The system returns a result and measures latency, errors, and capacity.') : (lang === 'bn' ? 'খরচ ও ট্রেড-অফ যাচাই করে সেরা বিকল্পটি বাছুন।' : 'Weigh the cost and trade-off, then choose the best alternative.')}</span></li></ol></LessonSection>
-        {topic.complexity?.length > 0 && <LessonSection number="•" label={lang === 'bn' ? 'জটিলতা' : 'Complexity'}><ComplexityTable rows={topic.complexity} lang={lang} /></LessonSection>}
+        {topic.complexity?.length > 0 && <LessonSection number="•" label={course.id === 'git' ? (lang === 'bn' ? 'জরুরি কমান্ড' : 'Key commands') : (lang === 'bn' ? 'জটিলতা' : 'Complexity')}><ComplexityTable rows={topic.complexity} lang={lang} courseId={course.id} /></LessonSection>}
         {topic.deepDive && <FlagshipDeepDive key={topic.id} content={topic.deepDive} lang={lang} />}
         <LessonSection number="06" label={lang === 'bn' ? 'ট্রেড-অফ' : 'Trade-offs'}><div className="pros-cons"><div><strong>＋ {lang === 'bn' ? 'কেন কার্যকর' : 'Why it helps'}</strong><p>{text(topic.advantages)}</p></div><div><strong>△ {lang === 'bn' ? 'মূল মূল্য' : 'The cost'}</strong><p>{text(topic.tradeoff)}</p></div></div></LessonSection>
         <DecisionCheckpoint key={topic.id} topic={topic} lang={lang} />
@@ -557,8 +557,10 @@ function LessonSection({ number, label, children }) {
   return <section className="lesson-section"><header><span>{number}</span><h2>{label}</h2></header>{children}</section>
 }
 
-function ComplexityTable({ rows, lang }) {
-  return <div className="complexity-table"><div className="complexity-head"><span>{lang === 'bn' ? 'অপারেশন' : 'Operation'}</span><span>{lang === 'bn' ? 'জটিলতা' : 'Complexity'}</span></div>{rows.map((row, index) => <div className="complexity-row" key={index}><span>{t(row.op, lang)}</span><code>{row.value}</code></div>)}</div>
+function ComplexityTable({ rows, lang, courseId }) {
+  const isGit = courseId === 'git'
+  const head = isGit ? (lang === 'bn' ? ['লক্ষ্য', 'কমান্ড'] : ['Goal', 'Command']) : (lang === 'bn' ? ['অপারেশন', 'জটিলতা'] : ['Operation', 'Complexity'])
+  return <div className="complexity-table"><div className="complexity-head"><span>{head[0]}</span><span>{head[1]}</span></div>{rows.map((row, index) => <div className="complexity-row" key={index}><span>{t(row.op, lang)}</span><code>{row.value}</code></div>)}</div>
 }
 
 function FlagshipDeepDive({ content, lang }) {

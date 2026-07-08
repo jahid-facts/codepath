@@ -1,5 +1,6 @@
 import { l, modules as sdModules, topics as sdTopics, labs as sdLabs } from './data.js'
 import { dsaModules, dsaTopics, dsaLabs } from './courses/dsa.js'
+import { gitModules, gitTopics, gitLabs } from './courses/git.js'
 import { networkingModule, networkingTopics } from './courses/system-design-networking.js'
 
 // Tag content with its owning course without mutating the source arrays
@@ -40,11 +41,14 @@ export const courses = [
     labs: dsaLabs,
   },
   {
-    id: 'git', available: false,
+    id: 'git', available: true,
     title: l('Git & GitHub', 'গিট ও গিটহাব'),
     tagline: l('Git & GitHub', 'গিট ও গিটহাব'),
     summary: l('Version control, branching workflows, pull requests, and collaboration on GitHub.', 'ভার্সন কন্ট্রোল, ব্রাঞ্চিং ওয়ার্কফ্লো, পুল রিকোয়েস্ট ও গিটহাবে সহযোগিতা।'),
     mark: 'G', color: '#e34b87', accent: '#fdeaf1', icon: '⑂',
+    modules: tag('git', gitModules),
+    topics: tag('git', gitTopics),
+    labs: gitLabs,
   },
   {
     id: 'networking', available: false,
