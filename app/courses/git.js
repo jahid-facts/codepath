@@ -1,4 +1,5 @@
 import { l } from '../data.js'
+import { buildExam } from './exam-factory.js'
 
 // Git & GitHub course — bilingual (English / Bangla).
 // Mirrors the DSA course shape so lesson rendering stays data-driven.
@@ -254,39 +255,12 @@ const distractors = [
   l('Force-push to shared branches whenever the history looks messy.', 'ইতিহাস অগোছালো দেখালেই শেয়ার্ড ব্রাঞ্চে ফোর্স-পুশ করুন।'),
   l('Commit everything—including secrets and node_modules—in one giant commit.', 'সিক্রেট ও node_modules সহ সবকিছু এক বিশাল কমিটে দিন।'),
   l('Skip commit messages and never record what changed or why.', 'কমিট মেসেজ বাদ দিন, কী ও কেন বদলালো কখনো লিখবেন না।'),
+  l('Rebase a branch other people have already pulled.', 'অন্যরা টেনে নিয়েছে এমন ব্রাঞ্চ রিবেস করুন।'),
+  l('Commit conflict markers without ever resolving them.', 'কনফ্লিক্ট মার্কার সমাধান না করেই কমিট করুন।'),
+  l('Assume git commit already updated GitHub without pushing.', 'পুশ ছাড়াই ধরে নিন git commit গিটহাব আপডেট করে ফেলেছে।'),
+  l('Paste your access token straight into the source code.', 'অ্যাক্সেস টোকেন সরাসরি সোর্স কোডে বসিয়ে দিন।'),
+  l('Reset --hard with uncommitted work still in the tree.', 'ট্রিতে আনকমিটেড কাজ রেখেই reset --hard চালান।'),
 ]
-
-function makeExam(topic) {
-  const correct = {
-    purpose: l(topic.insight.en, topic.insight.bn),
-    action: l(topic.action.en, topic.action.bn),
-    tradeoff: l(topic.tradeoff.en, topic.tradeoff.bn),
-    mistake: l(topic.mistake.en, topic.mistake.bn),
-  }
-  const optionSet = (answer, offset = 0) => {
-    const answerIndex = offset % 4
-    const values = [...distractors]
-    values.splice(answerIndex, 0, answer)
-    return {
-      options: values.map((text, index) => ({ id: String.fromCharCode(97 + index), text })),
-      correct: [String.fromCharCode(97 + answerIndex)],
-    }
-  }
-  const purpose = optionSet(correct.purpose, topic.order)
-  const action = optionSet(correct.action, topic.order + 1)
-  const mistake = optionSet(correct.mistake, topic.order + 2)
-  const interview = optionSet(l(`Name the command, say what it changes, and state this trade-off: ${topic.tradeoff.en}`, `কমান্ডের নাম বলুন, কী বদলায় বলুন, এবং এই ট্রেড-অফ বলুন: ${topic.tradeoff.bn}`), topic.order + 3)
-
-  return [
-    { id: 'q1', type: 'single', concept: topic.title, prompt: l(`What is the central idea of ${topic.title.en}?`, `${topic.title.bn}-এর মূল ধারণা কী?`), ...purpose, explanation: correct.purpose },
-    { id: 'q2', type: 'single', concept: topic.title, prompt: l('Which approach is the strongest habit here?', 'এখানে কোন পদ্ধতিটি সবচেয়ে ভালো অভ্যাস?'), ...action, explanation: correct.action },
-    { id: 'q3', type: 'multi', concept: topic.title, prompt: l('Select both statements that show sound Git practice.', 'সঠিক গিট চর্চা দেখায়—এমন দুটি বক্তব্য বাছুন।'), options: [
-      { id: 'a', text: correct.purpose }, { id: 'b', text: distractors[0] }, { id: 'c', text: correct.tradeoff }, { id: 'd', text: distractors[1] },
-    ], correct: ['a', 'c'], explanation: l(`A sound answer states both the mechanism and its trade-off: ${topic.tradeoff.en}`, `সঠিক উত্তরে প্রক্রিয়া ও ট্রেড-অফ দুটিই থাকে: ${topic.tradeoff.bn}`) },
-    { id: 'q4', type: 'single', concept: topic.title, prompt: l('Which choice is a common mistake?', 'কোনটি সাধারণ ভুল?'), ...mistake, explanation: l(`Avoid this mistake: ${topic.mistake.en}`, `এই ভুল এড়িয়ে চলুন: ${topic.mistake.bn}`) },
-    { id: 'q5', type: 'single', concept: topic.title, prompt: l('What should a strong interview answer include?', 'একটি ভালো ইন্টারভিউ উত্তরে কী থাকা উচিত?'), ...interview, explanation: l('Interviewers value a named command, what it actually changes, and an explicit trade-off over memorized syntax.', 'ইন্টারভিউয়ার মুখস্থ সিনট্যাক্সের চেয়ে বলা কমান্ড, তা আসলে কী বদলায়, ও স্পষ্ট ট্রেড-অফকে বেশি মূল্য দেন।') },
-  ]
-}
 
 export const gitTopics = rawTopics.map((row, index) => {
   const [id, moduleId, en, bn, difficulty, minutes, diagram, insightEn, insightBn, analogyEn, analogyBn, actionEn, actionBn, tradeoffEn, tradeoffBn, mistakeEn, mistakeBn] = row
@@ -306,7 +280,7 @@ export const gitTopics = rawTopics.map((row, index) => {
       { term: l('Branch', 'ব্রাঞ্চ'), definition: l('A movable pointer to a commit, used to develop work in isolation.', 'একটি কমিটের দিকে সরানো-যোগ্য পয়েন্টার, আলাদাভাবে কাজ করতে ব্যবহৃত।') },
     ],
   }
-  topic.exam = makeExam(topic).map((question) => ({ ...question, concept: topic.title }))
+  topic.exam = buildExam(topic, { distractors, subject: 'git' })
   return topic
 })
 

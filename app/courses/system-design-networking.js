@@ -1,4 +1,5 @@
 import { l } from '../data.js'
+import { buildExam } from './exam-factory.js'
 
 // "Networking basics" — a supplemental module merged into the System Design course.
 // Kept out of data.js so the test suite's fixed 40-topic core stays intact.
@@ -53,30 +54,12 @@ const distractors = [
   l('Send raw bytes with no protocol and hope the other side understands.', 'কোনো প্রোটোকল ছাড়া কাঁচা বাইট পাঠান এবং আশা করুন অন্য পাশ বুঝবে।'),
   l('Assume every network is fast, reliable, and never drops a packet.', 'ধরে নিন প্রতিটি নেটওয়ার্ক দ্রুত, নির্ভরযোগ্য এবং কখনো প্যাকেট হারায় না।'),
   l('Trust any server without verifying its identity or encrypting traffic.', 'পরিচয় যাচাই বা ট্রাফিক এনক্রিপ্ট না করে যেকোনো সার্ভার বিশ্বাস করুন।'),
+  l('Ignore latency and round trips because the demo felt fast enough.', 'ডেমো যথেষ্ট দ্রুত লেগেছে বলে লেটেন্সি ও রাউন্ড ট্রিপ উপেক্ষা করুন।'),
+  l('Hard-code IP addresses and never use DNS names.', 'IP ঠিকানা হার্ড-কোড করুন এবং কখনো DNS নাম ব্যবহার করবেন না।'),
+  l('Retry forever with no timeout when a request stalls.', 'অনুরোধ আটকে গেলে টাইমআউট ছাড়াই চিরকাল রিট্রাই করুন।'),
+  l('Send passwords and tokens over plain, unencrypted HTTP.', 'সাধারণ, এনক্রিপ্ট-না-করা HTTP-তে পাসওয়ার্ড ও টোকেন পাঠান।'),
+  l('Treat every layer as one blob instead of separate responsibilities.', 'প্রতিটি স্তরকে আলাদা দায়িত্ব না ভেবে এক তাল হিসেবে ধরুন।'),
 ]
-
-function makeExam(topic) {
-  const correct = { purpose: topic.insight, action: topic.action, tradeoff: topic.tradeoff, mistake: topic.mistake }
-  const optionSet = (answer, offset = 0) => {
-    const answerIndex = offset % 4
-    const values = [...distractors]
-    values.splice(answerIndex, 0, answer)
-    return { options: values.map((text, index) => ({ id: String.fromCharCode(97 + index), text })), correct: [String.fromCharCode(97 + answerIndex)] }
-  }
-  const purpose = optionSet(correct.purpose, topic.order)
-  const action = optionSet(correct.action, topic.order + 1)
-  const mistake = optionSet(correct.mistake, topic.order + 2)
-  const interview = optionSet(l(`Name the layer and protocol, then explain this trade-off: ${topic.tradeoff.en}`, `স্তর ও প্রোটোকল বলুন, তারপর এই ট্রেড-অফ ব্যাখ্যা করুন: ${topic.tradeoff.bn}`), topic.order + 3)
-  return [
-    { id: 'q1', type: 'single', concept: topic.title, prompt: l(`What is the central idea of ${topic.title.en}?`, `${topic.title.bn}-এর মূল ধারণা কী?`), ...purpose, explanation: correct.purpose },
-    { id: 'q2', type: 'single', concept: topic.title, prompt: l('Which approach is the strongest starting decision?', 'কোন পদ্ধতিটি সবচেয়ে শক্তিশালী শুরুর সিদ্ধান্ত?'), ...action, explanation: correct.action },
-    { id: 'q3', type: 'multi', concept: topic.title, prompt: l('Select both statements that show sound networking reasoning.', 'সঠিক নেটওয়ার্কিং চিন্তা দেখায়—এমন দুটি বক্তব্য বাছুন।'), options: [
-      { id: 'a', text: correct.purpose }, { id: 'b', text: distractors[0] }, { id: 'c', text: correct.tradeoff }, { id: 'd', text: distractors[1] },
-    ], correct: ['a', 'c'], explanation: l(`A sound answer states both the mechanism and its trade-off: ${topic.tradeoff.en}`, `সঠিক উত্তরে প্রক্রিয়া ও ট্রেড-অফ দুটিই থাকে: ${topic.tradeoff.bn}`) },
-    { id: 'q4', type: 'single', concept: topic.title, prompt: l('Which choice is a common mistake?', 'কোনটি সাধারণ ভুল?'), ...mistake, explanation: l(`Avoid this mistake: ${topic.mistake.en}`, `এই ভুল এড়িয়ে চলুন: ${topic.mistake.bn}`) },
-    { id: 'q5', type: 'single', concept: topic.title, prompt: l('What should a strong interview answer include?', 'একটি ভালো ইন্টারভিউ উত্তরে কী থাকা উচিত?'), ...interview, explanation: l('Interviewers value naming the layer/protocol and stating an explicit trade-off.', 'ইন্টারভিউয়ার স্তর/প্রোটোকল উল্লেখ ও স্পষ্ট ট্রেড-অফ বলাকে মূল্য দেন।') },
-  ]
-}
 
 export const networkingTopics = rawTopics.map((row, index) => {
   const [id, moduleId, en, bn, difficulty, minutes, diagram, insightEn, insightBn, analogyEn, analogyBn, actionEn, actionBn, tradeoffEn, tradeoffBn, mistakeEn, mistakeBn] = row
@@ -95,6 +78,6 @@ export const networkingTopics = rawTopics.map((row, index) => {
       { term: l('Trade-off', 'ট্রেড-অফ'), definition: l('Improving one quality by accepting a cost elsewhere.', 'অন্যদিকে খরচ মেনে একটি গুণ উন্নত করা।') },
     ],
   }
-  topic.exam = makeExam(topic).map((question) => ({ ...question, concept: topic.title }))
+  topic.exam = buildExam(topic, { distractors, subject: 'system-design' })
   return topic
 })

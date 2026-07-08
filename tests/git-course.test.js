@@ -20,14 +20,14 @@ test('Git topics are unique, ordered, and every topic maps to a real module', ()
   })
 })
 
-test('every Git topic has bilingual content, objectives, and five valid questions', () => {
+test('every Git topic has bilingual content, objectives, and fifteen valid questions', () => {
   for (const topic of gitTopics) {
     for (const field of ['title', 'insight', 'analogy', 'action', 'tradeoff', 'mistake', 'advantages', 'interview']) {
       assert.ok(topic[field].en.trim(), `${topic.id}.${field}.en is required`)
       assert.ok(topic[field].bn.trim(), `${topic.id}.${field}.bn is required`)
     }
     assert.equal(topic.objectives.length, 3)
-    assert.equal(topic.exam.length, 5)
+    assert.equal(topic.exam.length, 15)
     for (const question of topic.exam) {
       assert.ok(question.prompt.en && question.prompt.bn, `${topic.id} question prompt must be bilingual`)
       assert.ok(question.explanation.en && question.explanation.bn, `${topic.id} explanation must be bilingual`)

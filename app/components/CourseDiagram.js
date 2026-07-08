@@ -132,6 +132,143 @@ const renderers = {
       caption: { en: 'GitHub Flow: branch, commit, push, open a PR, review, then merge.', bn: 'GitHub Flow: ব্রাঞ্চ, কমিট, পুশ, PR খুলুন, রিভিউ, তারপর মার্জ।' },
     }
   },
+  // ── Linear structures ──────────────────────────────────────────────────────
+  stack: (step, lang) => {
+    const items = [3, 7, 5, 9]
+    const n = 2 + (step % 3)
+    return {
+      view: [360, 250],
+      body: <>
+        {items.slice(0, n).map((v, i) => { const y = 196 - i * 44; return <g key={i}><rect x={120} y={y} width={110} height={40} rx="8" className={`dsa-cell ${i === n - 1 ? 'active' : ''}`} /><text x={175} y={y + 25} textAnchor="middle" className="dsa-val">{v}</text></g> })}
+        <text x={248} y={196 - (n - 1) * 44 + 24} className="dsa-ptr">← top</text>
+        <text x={175} y={232} textAnchor="middle" className="dsa-idx">{tr(lang, 'push / pop at the top only', 'শুধু ওপরে push / pop')}</text>
+      </>,
+      caption: { en: 'LIFO: you only ever push to or pop from the top.', bn: 'LIFO: শুধু ওপরে push বা ওপর থেকে pop।' },
+    }
+  },
+  queue: (step, lang) => {
+    const items = [4, 8, 1, 6, 3]
+    const front = step % 3
+    return {
+      view: [520, 140],
+      body: <>
+        {items.map((v, i) => <Cell key={i} x={30 + i * 92} y={44} w={72} h={50} label={v} active={i === front} dim={i < front} />)}
+        <text x={30 + front * 92 + 36} y={32} textAnchor="middle" className="dsa-ptr">{tr(lang, 'front', 'front')}</text>
+        <text x={30 + (items.length - 1) * 92 + 36} y={118} textAnchor="middle" className="dsa-ptr">{tr(lang, 'rear', 'rear')}</text>
+      </>,
+      caption: { en: 'FIFO: enqueue at the rear, dequeue from the front.', bn: 'FIFO: পিছনে enqueue, সামনে থেকে dequeue।' },
+    }
+  },
+  sorting: (step) => {
+    const heights = [5, 2, 8, 1, 9, 3, 7, 4]
+    const sorted = [1, 2, 3, 4, 5, 7, 8, 9]
+    const k = step % (heights.length + 1)
+    const arr = [...sorted.slice(0, k), ...heights.slice(k)]
+    return {
+      view: [520, 180],
+      body: <>{arr.map((v, i) => { const h = v / 9 * 128; return <g key={i}><rect x={40 + i * 58} y={150 - h} width={44} height={h} rx="6" className={`dsa-cell ${i < k ? 'dim' : i === k ? 'active' : ''}`} /><text x={40 + i * 58 + 22} y={168} textAnchor="middle" className="dsa-idx">{v}</text></g> })}</>,
+      caption: { en: 'Sorting rearranges items into order; the settled prefix grows left to right.', bn: 'সর্টিং আইটেম ক্রমে সাজায়; স্থির প্রিফিক্স বাম থেকে ডানে বাড়ে।' },
+    }
+  },
+  recursion: (step, lang) => {
+    const frames = ['f(4)', 'f(3)', 'f(2)', 'f(1)']
+    const depth = step % 4 + 1
+    return {
+      view: [400, 250],
+      body: <>
+        {frames.slice(0, depth).map((lab, i) => <g key={i}><rect x={80 + i * 12} y={30 + i * 46} width={210} height={40} rx="8" className={`dsa-cell ${i === depth - 1 ? 'active' : ''}`} /><text x={185 + i * 12} y={55 + i * 46} textAnchor="middle" className="dsa-val">{lab}</text></g>)}
+        <text x={190} y={238} textAnchor="middle" className="dsa-idx">{tr(lang, 'each call adds a stack frame', 'প্রতিটি কল একটি স্ট্যাক ফ্রেম যোগ করে')}</text>
+      </>,
+      caption: { en: 'Each recursive call stacks a new frame until the base case unwinds it.', bn: 'বেস কেস না আসা পর্যন্ত প্রতিটি রিকার্সিভ কল নতুন ফ্রেম জমায়।' },
+    }
+  },
+  // ── Trees ──────────────────────────────────────────────────────────────────
+  bst: (step) => {
+    const labels = [50, 30, 70, 20, 40, 60, 80]
+    const path = [0, 2, 5]
+    return { view: [600, 220], body: treeSvg(labels, path[step % path.length]), caption: { en: 'A BST keeps smaller keys left, larger right — search follows one path down.', bn: 'BST ছোট কী বামে, বড় ডানে রাখে—সার্চ একটি পথ ধরে নিচে নামে।' } }
+  },
+  heap: (step) => {
+    const labels = [90, 70, 80, 40, 60, 75, 50]
+    const path = [0, 2, 5]
+    return { view: [600, 220], body: treeSvg(labels, path[step % path.length]), caption: { en: 'A max-heap keeps every parent ≥ its children, so the maximum sits at the root.', bn: 'ম্যাক্স-হিপে প্রতিটি প্যারেন্ট ≥ চাইল্ড, তাই সর্বোচ্চ রুটে থাকে।' } }
+  },
+  traversal: (step) => {
+    const labels = ['F', 'B', 'G', 'A', 'D', 'C', 'I']
+    const order = [3, 1, 4, 0, 5, 2, 6]
+    return { view: [600, 220], body: treeSvg(labels, order[step % order.length]), caption: { en: 'A traversal visits every node in a fixed order — shown here in-order (A B D F C G I).', bn: 'ট্রাভার্সাল প্রতিটি নোড নির্দিষ্ট ক্রমে দেখে—এখানে ইন-অর্ডার (A B D F C G I)।' } }
+  },
+  backtracking: (step, lang) => {
+    const pruned = step % 2 === 0 ? [3, 5] : [2, 4]
+    return {
+      view: [600, 230],
+      body: <>{treeSvg(['', '', '', '', '', '', ''], -1, pruned)}<text x={300} y={218} textAnchor="middle" className="dsa-idx">{tr(lang, 'dead-end branches are pruned', 'ডেড-এন্ড শাখা ছেঁটে ফেলা হয়')}</text></>,
+      caption: { en: 'Backtracking abandons (prunes) branches that cannot lead to a valid solution.', bn: 'ব্যাকট্র্যাকিং যেসব শাখা বৈধ সমাধানে পৌঁছাতে পারে না তা ছেড়ে (ছেঁটে) দেয়।' },
+    }
+  },
+  trie: (step, lang) => {
+    const N = [[200, 34, '•'], [200, 96, 't'], [120, 166, 'o'], [280, 166, 'e'], [230, 228, 'a'], [330, 228, 'n']]
+    const E = [[0, 1], [1, 2], [1, 3], [3, 4], [3, 5]]
+    const shown = step % 6
+    return {
+      view: [440, 262],
+      body: <>
+        {E.map(([a, b], i) => b <= shown ? <Edge key={i} x1={N[a][0]} y1={N[a][1]} x2={N[b][0]} y2={N[b][1]} active={b === shown} /> : null)}
+        {N.map(([x, y, lab], i) => i <= shown ? <Node key={i} cx={x} cy={y} r={18} label={lab} active={i === shown} /> : null)}
+        <text x={220} y={256} textAnchor="middle" className="dsa-idx">{tr(lang, 'to · tea · ten share the prefix “t”', 'to · tea · ten “t” প্রিফিক্স শেয়ার করে')}</text>
+      </>,
+      caption: { en: 'A trie stores strings by shared prefixes, so common starts are stored once.', bn: 'ট্রাই শেয়ার্ড প্রিফিক্স দিয়ে স্ট্রিং রাখে, তাই একই শুরু একবারই থাকে।' },
+    }
+  },
+  // ── Graphs ─────────────────────────────────────────────────────────────────
+  graph: (step) => ({
+    view: [600, 210],
+    body: graphSvg([Object.keys(GRAPH.nodes)[step % 5]]),
+    caption: { en: 'A graph is nodes joined by edges — stored as an adjacency list or matrix.', bn: 'গ্রাফ হলো এজ দিয়ে যুক্ত নোড—অ্যাডজেসেন্সি লিস্ট বা ম্যাট্রিক্স হিসেবে রাখা।' },
+  }),
+  bfs: (step, lang) => {
+    const levels = [['A'], ['A', 'B', 'D'], ['A', 'B', 'D', 'C', 'E']]
+    return { view: [600, 210], body: graphSvg(levels[step % 3]), caption: { en: 'BFS explores level by level with a queue — nearest nodes first.', bn: 'BFS কিউ দিয়ে স্তর-ধরে খোঁজে—আগে সবচেয়ে কাছের নোড।' } }
+  },
+  dfs: (step) => {
+    const order = ['A', 'B', 'C', 'E', 'D']
+    return { view: [600, 210], body: graphSvg(order.slice(0, step % 5 + 1)), caption: { en: 'DFS follows one path as deep as possible before backtracking.', bn: 'DFS ব্যাকট্র্যাকের আগে একটি পথ যতটা সম্ভব গভীরে অনুসরণ করে।' } }
+  },
+  greedy: (step, lang) => {
+    const coins = [25, 10, 5, 1]
+    const pick = step % coins.length
+    return {
+      view: [500, 160],
+      body: <>
+        {coins.map((v, i) => <Node key={i} cx={90 + i * 108} cy={70} r={34} label={v} active={i === pick} dim={i < pick} />)}
+        <text x={250} y={140} textAnchor="middle" className="dsa-idx">{tr(lang, 'take the best local choice each step', 'প্রতি ধাপে সেরা স্থানীয় পছন্দ নিন')}</text>
+      </>,
+      caption: { en: 'A greedy algorithm takes the best local choice at each step.', bn: 'গ্রিডি অ্যালগরিদম প্রতি ধাপে সেরা স্থানীয় পছন্দ নেয়।' },
+    }
+  },
+  complexity: (step, lang) => {
+    const x0 = 54, y0 = 168, xw = 430, yh = 150
+    const curves = [
+      { label: 'O(1)', f: () => 0.04 },
+      { label: 'O(log n)', f: (x) => Math.log2(1 + x * 24) / Math.log2(25) * 0.45 },
+      { label: 'O(n)', f: (x) => x },
+      { label: 'O(n log n)', f: (x) => Math.min(x * Math.log2(1 + x * 24) / Math.log2(25), 1) },
+      { label: 'O(n²)', f: (x) => x * x },
+    ]
+    const hi = step % curves.length
+    const pts = (f) => Array.from({ length: 25 }, (_, i) => { const x = i / 24; const y = Math.min(f(x), 1); return `${x0 + x * xw},${y0 - y * yh}` }).join(' ')
+    return {
+      view: [520, 200],
+      body: <>
+        <line x1={x0} y1={y0} x2={x0 + xw} y2={y0} className="dsa-edge" />
+        <line x1={x0} y1={y0} x2={x0} y2={y0 - yh} className="dsa-edge" />
+        {curves.map((c, i) => <polyline key={i} points={pts(c.f)} className={`dsa-edge ${i === hi ? 'active' : ''}`} style={{ fill: 'none', strokeWidth: i === hi ? 3.5 : 1.3, opacity: i === hi ? 1 : 0.45 }} />)}
+        <text x={x0 + xw} y={y0 + 20} textAnchor="end" className="dsa-idx">{tr(lang, 'input size n →', 'ইনপুট n →')}</text>
+        <text x={x0 + 8} y={y0 - yh + 6} className="dsa-val">{curves[hi].label}</text>
+      </>,
+      caption: { en: 'Big-O compares how cost grows with input size — the gap explodes as n rises.', bn: 'বিগ-ও ইনপুট বাড়লে খরচ কীভাবে বাড়ে তা তুলনা করে—n বাড়লে পার্থক্য বিস্ফোরিত হয়।' },
+    }
+  },
   'binary-search': (step, lang) => {
     const arr = [1, 3, 5, 7, 9, 11, 13, 15]
     const states = [[0, 3, 7], [4, 5, 7], [6, 6, 7]]
@@ -353,7 +490,7 @@ const renderers = {
   },
 }
 
-const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 1, queue: 1, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 7, traversal: 7, heap: 7, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6 }
+const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6 }
 
 function DsaDiagram({ kind, lang, title }) {
   const renderer = renderers[kind] || renderers['algo-flow']

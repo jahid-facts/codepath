@@ -1,4 +1,5 @@
 import { l } from '../data.js'
+import { buildExam } from './exam-factory.js'
 
 // Data Structures & Algorithms course — bilingual (English / Bangla).
 // Topic rows mirror the System Design course shape so lesson rendering stays data-driven.
@@ -238,44 +239,17 @@ const complexity = {
   'dsa-dp': [['Time', 'সময়', 'O(states × work)'], ['Space', 'স্পেস', 'O(states)']],
 }
 
-// DSA-flavoured distractors for generated exams.
+// DSA-flavoured distractors for generated exams (each is a clearly wrong idea).
 const distractors = [
   l('Pick the structure with the fanciest name regardless of the operations.', 'অপারেশন যাই হোক, সবচেয়ে জমকালো নামের স্ট্রাকচার বেছে নিন।'),
   l('Assume every operation is O(1) and never analyze the worst case.', 'ধরে নিন প্রতিটি অপারেশন O(1) এবং ওয়ার্স্ট কেস কখনো বিশ্লেষণ করবেন না।'),
   l('Optimize constant factors before fixing an exponential algorithm.', 'এক্সপোনেনশিয়াল অ্যালগরিদম ঠিক করার আগে ধ্রুবক ফ্যাক্টর অপটিমাইজ করুন।'),
+  l('Choose a data structure before knowing which operations dominate.', 'কোন অপারেশন প্রধান তা জানার আগেই ডেটা স্ট্রাকচার বাছুন।'),
+  l('Trust average-case timing and ignore how the worst case behaves.', 'গড়-কেস সময়ে ভরসা করুন আর ওয়ার্স্ট কেস কেমন করে তা উপেক্ষা করুন।'),
+  l('Reach for recursion without ever defining a base case.', 'বেস কেস সংজ্ঞায়িত না করেই রিকার্শন ব্যবহার করুন।'),
+  l('Keep scanning the whole list even when the data is already sorted.', 'ডেটা আগে থেকেই সাজানো থাকলেও পুরো লিস্ট স্ক্যান করতে থাকুন।'),
+  l('Memorize code but skip the complexity and the trade-off.', 'কোড মুখস্থ করুন কিন্তু জটিলতা ও ট্রেড-অফ বাদ দিন।'),
 ]
-
-function makeExam(topic) {
-  const correct = {
-    purpose: l(topic.insight.en, topic.insight.bn),
-    action: l(topic.action.en, topic.action.bn),
-    tradeoff: l(topic.tradeoff.en, topic.tradeoff.bn),
-    mistake: l(topic.mistake.en, topic.mistake.bn),
-  }
-  const optionSet = (answer, offset = 0) => {
-    const answerIndex = offset % 4
-    const values = [...distractors]
-    values.splice(answerIndex, 0, answer)
-    return {
-      options: values.map((text, index) => ({ id: String.fromCharCode(97 + index), text })),
-      correct: [String.fromCharCode(97 + answerIndex)],
-    }
-  }
-  const purpose = optionSet(correct.purpose, topic.order)
-  const action = optionSet(correct.action, topic.order + 1)
-  const mistake = optionSet(correct.mistake, topic.order + 2)
-  const interview = optionSet(l(`State the complexity, the core operation, and this trade-off: ${topic.tradeoff.en}`, `জটিলতা, মূল অপারেশন এবং এই ট্রেড-অফ বলুন: ${topic.tradeoff.bn}`), topic.order + 3)
-
-  return [
-    { id: 'q1', type: 'single', concept: topic.title, prompt: l(`What is the central idea of ${topic.title.en}?`, `${topic.title.bn}-এর মূল ধারণা কী?`), ...purpose, explanation: correct.purpose },
-    { id: 'q2', type: 'single', concept: topic.title, prompt: l('Which approach is the strongest starting decision?', 'কোন পদ্ধতিটি সবচেয়ে শক্তিশালী শুরুর সিদ্ধান্ত?'), ...action, explanation: correct.action },
-    { id: 'q3', type: 'multi', concept: topic.title, prompt: l('Select both statements that show sound algorithmic reasoning.', 'সঠিক অ্যালগরিদমিক চিন্তা দেখায়—এমন দুটি বক্তব্য বাছুন।'), options: [
-      { id: 'a', text: correct.purpose }, { id: 'b', text: distractors[0] }, { id: 'c', text: correct.tradeoff }, { id: 'd', text: distractors[1] },
-    ], correct: ['a', 'c'], explanation: l(`A sound answer states both the mechanism and its trade-off: ${topic.tradeoff.en}`, `সঠিক উত্তরে প্রক্রিয়া ও ট্রেড-অফ দুটিই থাকে: ${topic.tradeoff.bn}`) },
-    { id: 'q4', type: 'single', concept: topic.title, prompt: l('Which choice is a common mistake?', 'কোনটি সাধারণ ভুল?'), ...mistake, explanation: l(`Avoid this mistake: ${topic.mistake.en}`, `এই ভুল এড়িয়ে চলুন: ${topic.mistake.bn}`) },
-    { id: 'q5', type: 'single', concept: topic.title, prompt: l('What should a strong interview answer include?', 'একটি ভালো ইন্টারভিউ উত্তরে কী থাকা উচিত?'), ...interview, explanation: l('Interviewers value stated complexity, the key operation, and an explicit trade-off over memorized code.', 'ইন্টারভিউয়ার মুখস্থ কোডের চেয়ে বলা জটিলতা, মূল অপারেশন ও স্পষ্ট ট্রেড-অফকে বেশি মূল্য দেন।') },
-  ]
-}
 
 export const dsaTopics = rawTopics.map((row, index) => {
   const [id, moduleId, en, bn, difficulty, minutes, diagram, insightEn, insightBn, analogyEn, analogyBn, actionEn, actionBn, tradeoffEn, tradeoffBn, mistakeEn, mistakeBn] = row
@@ -295,7 +269,7 @@ export const dsaTopics = rawTopics.map((row, index) => {
       { term: l('Trade-off', 'ট্রেড-অফ'), definition: l('Improving one operation by accepting a cost elsewhere.', 'অন্যদিকে খরচ মেনে একটি অপারেশন উন্নত করা।') },
     ],
   }
-  topic.exam = makeExam(topic).map((question) => ({ ...question, concept: topic.title }))
+  topic.exam = buildExam(topic, { distractors, subject: 'dsa' })
   return topic
 })
 

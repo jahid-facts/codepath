@@ -1,5 +1,6 @@
 import { allFlagshipContent } from './flagship-content.js'
 import { flagshipExams } from './flagship-exams.js'
+import { buildExam } from './courses/exam-factory.js'
 
 export const l = (en, bn) => ({ en, bn })
 
@@ -263,39 +264,12 @@ const distractors = [
   l('Choose the newest tool before measuring the problem.', 'সমস্যা মাপার আগে সবচেয়ে নতুন টুল বেছে নিন।'),
   l('Put every responsibility in one server and remove monitoring.', 'সব দায়িত্ব একটি সার্ভারে রাখুন এবং মনিটরিং বাদ দিন।'),
   l('Assume failures and traffic spikes will not happen.', 'ধরে নিন ব্যর্থতা ও ট্রাফিক স্পাইক হবে না।'),
+  l('Design for peak load without ever measuring real traffic.', 'বাস্তব ট্রাফিক না মেপে পিক লোডের জন্য ডিজাইন করুন।'),
+  l('Add caches and queues everywhere before finding the bottleneck.', 'বটলনেক খোঁজার আগেই সর্বত্র ক্যাশ ও কিউ যোগ করুন।'),
+  l('Skip capacity estimates and hope the database keeps up.', 'ক্যাপাসিটি হিসাব বাদ দিন আর আশা করুন ডেটাবেস সামলে নেবে।'),
+  l('Couple every service tightly so one failure takes down all.', 'প্রতিটি সার্ভিস শক্তভাবে যুক্ত করুন যাতে একটির ব্যর্থতা সব ফেলে দেয়।'),
+  l('Ship without a plan for retries, timeouts, or backpressure.', 'রিট্রাই, টাইমআউট বা ব্যাকপ্রেশারের পরিকল্পনা ছাড়াই শিপ করুন।'),
 ]
-
-function makeExam(topic) {
-  const correct = {
-    purpose: l(topic.insight.en, topic.insight.bn),
-    action: l(topic.action.en, topic.action.bn),
-    tradeoff: l(topic.tradeoff.en, topic.tradeoff.bn),
-    mistake: l(topic.mistake.en, topic.mistake.bn),
-  }
-  const optionSet = (answer, offset = 0) => {
-    const answerIndex = offset % 4
-    const values = [...distractors]
-    values.splice(answerIndex, 0, answer)
-    return {
-      options: values.map((text, index) => ({ id: String.fromCharCode(97 + index), text })),
-      correct: [String.fromCharCode(97 + answerIndex)],
-    }
-  }
-  const purpose = optionSet(correct.purpose, topic.order)
-  const action = optionSet(correct.action, topic.order + 1)
-  const mistake = optionSet(correct.mistake, topic.order + 2)
-  const interview = optionSet(l(`The goal, the chosen approach, and this trade-off: ${topic.tradeoff.en}`, `লক্ষ্য, নির্বাচিত পদ্ধতি এবং এই ট্রেড-অফ: ${topic.tradeoff.bn}`), topic.order + 3)
-
-  return [
-    { id: 'q1', type: 'single', concept: topic.title, prompt: l(`What is the central idea of ${topic.title.en}?`, `${topic.title.bn}-এর মূল ধারণা কী?`), ...purpose, explanation: correct.purpose },
-    { id: 'q2', type: 'single', concept: topic.title, prompt: l('Which approach is the strongest starting decision?', 'কোন পদ্ধতিটি সবচেয়ে শক্তিশালী শুরুর সিদ্ধান্ত?'), ...action, explanation: correct.action },
-    { id: 'q3', type: 'multi', concept: topic.title, prompt: l('Select both statements that show sound system-design reasoning.', 'সঠিক সিস্টেম ডিজাইন চিন্তা দেখায়—এমন দুটি বক্তব্য বাছুন।'), options: [
-      { id: 'a', text: correct.purpose }, { id: 'b', text: distractors[0] }, { id: 'c', text: correct.tradeoff }, { id: 'd', text: distractors[2] },
-    ], correct: ['a', 'c'], explanation: l(`A sound answer states both the mechanism and its trade-off: ${topic.tradeoff.en}`, `সঠিক উত্তরে প্রক্রিয়া ও ট্রেড-অফ দুটিই থাকে: ${topic.tradeoff.bn}`) },
-    { id: 'q4', type: 'single', concept: topic.title, prompt: l('Which choice is a common design mistake?', 'কোনটি সাধারণ ডিজাইন ভুল?'), ...mistake, explanation: l(`Avoid this mistake: ${topic.mistake.en}`, `এই ভুল এড়িয়ে চলুন: ${topic.mistake.bn}`) },
-    { id: 'q5', type: 'single', concept: topic.title, prompt: l('What should a strong interview answer include?', 'একটি ভালো ইন্টারভিউ উত্তরে কী থাকা উচিত?'), ...interview, explanation: l('Interviewers value explicit assumptions, decisions, and trade-offs more than a memorized diagram.', 'ইন্টারভিউয়ার মুখস্থ ডায়াগ্রামের চেয়ে স্পষ্ট অনুমান, সিদ্ধান্ত ও ট্রেড-অফকে বেশি মূল্য দেন।') },
-  ]
-}
 
 export const topics = rawTopics.map((row, index) => {
   const [id, moduleId, en, bn, difficulty, minutes, diagram, insightEn, insightBn, analogyEn, analogyBn, actionEn, actionBn, tradeoffEn, tradeoffBn, mistakeEn, mistakeBn] = row
@@ -314,7 +288,12 @@ export const topics = rawTopics.map((row, index) => {
       { term: l('Trade-off', 'ট্রেড-অফ'), definition: l('Improving one quality by accepting a cost elsewhere.', 'অন্যদিকে খরচ মেনে একটি গুণ উন্নত করা।') },
     ],
   }
-  topic.exam = (flagshipExams[id] || makeExam(topic)).map((question) => ({ ...question, concept: topic.title }))
+  const authored = flagshipExams[id]
+  const generated = buildExam(topic, { distractors, subject: 'system-design' })
+  const merged = authored
+    ? [...authored, ...generated.filter((g) => !authored.some((a) => a.prompt.en === g.prompt.en))].slice(0, 15)
+    : generated
+  topic.exam = merged.map((question, i) => ({ ...question, id: `q${i + 1}`, concept: topic.title }))
   return topic
 })
 

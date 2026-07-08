@@ -13,14 +13,15 @@ test('curriculum has forty unique topics across six modules', () => {
   for (const module of modules) assert.ok(topics.some((topic) => topic.moduleId === module.id))
 })
 
-test('every topic has bilingual content and five valid questions', () => {
+test('every topic has bilingual content and fifteen valid questions', () => {
   for (const topic of topics) {
     for (const field of ['title', 'insight', 'analogy', 'action', 'tradeoff', 'mistake', 'advantages', 'interview']) {
       assert.ok(topic[field].en.trim(), `${topic.id}.${field}.en is required`)
       assert.ok(topic[field].bn.trim(), `${topic.id}.${field}.bn is required`)
     }
     assert.equal(topic.objectives.length, 3)
-    assert.equal(topic.exam.length, 5)
+    assert.equal(topic.exam.length, 15)
+    assert.equal(new Set(topic.exam.map((question) => question.id)).size, 15)
     for (const question of topic.exam) {
       assert.ok(question.prompt.en && question.prompt.bn)
       assert.ok(question.explanation.en && question.explanation.bn)
@@ -44,13 +45,14 @@ test('ten flagship lessons contain authored scale, contract, failure, and decisi
   }
 })
 
-test('flagship lessons use fifty unique authored scenario questions', () => {
+test('flagship lessons keep fifty unique authored scenario questions inside their expanded exams', () => {
   const flagship = topics.filter((topic) => topic.deepDive)
-  const questions = flagship.flatMap((topic) => topic.exam)
-  assert.equal(questions.length, 50)
-  assert.ok(questions.every((question) => question.authored === true))
-  assert.equal(new Set(questions.map((question) => question.prompt.en)).size, 50)
-  assert.ok(questions.every((question) => question.prompt.bn && question.explanation.bn))
+  for (const topic of flagship) assert.equal(topic.exam.length, 15, `${topic.id} should have fifteen questions`)
+  const authored = flagship.flatMap((topic) => topic.exam.filter((question) => question.authored))
+  assert.equal(authored.length, 50)
+  assert.ok(authored.every((question) => question.authored === true))
+  assert.equal(new Set(authored.map((question) => question.prompt.en)).size, 50)
+  assert.ok(authored.every((question) => question.prompt.bn && question.explanation.bn))
 })
 
 test('guided labs have bilingual decisions and valid expert choices', () => {
