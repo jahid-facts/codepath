@@ -507,6 +507,96 @@ const renderers = {
       caption: { en: 'A volume stores data outside the container, so it survives restarts and removal.', bn: 'ভলিউম কন্টেইনারের বাইরে ডেটা রাখে, তাই রিস্টার্ট ও রিমুভের পরও টিকে থাকে।' },
     }
   },
+  // ── Kubernetes renderers ───────────────────────────────────────────────────
+  'k8s-cluster': (step, lang) => {
+    const cx = (i) => 110 + i * 210
+    const cur = step % 3
+    return {
+      view: [640, 240],
+      body: <>
+        <g transform="translate(200 18)"><rect width="240" height="48" rx="10" className="dsa-cell active" /><text x="120" y="30" textAnchor="middle" className="dsa-val" style={{ fontSize: '13px' }}>{tr(lang, 'Control plane (API server)', 'কন্ট্রোল প্লেন (API সার্ভার)')}</text></g>
+        {[0, 1, 2].map((i) => <g key={i}>
+          <Edge id="flow" x1={320} y1={66} x2={cx(i)} y2={112} active={i === cur} />
+          <rect x={cx(i) - 72} y={112} width={144} height={104} rx="10" className={`dsa-cell ${i === cur ? 'active' : ''}`} style={{ fill: 'none' }} />
+          <text x={cx(i)} y={132} textAnchor="middle" className="dsa-idx">{tr(lang, 'node', 'নোড')} {i + 1}</text>
+          <Node cx={cx(i) - 30} cy={172} r={16} label="" />
+          <Node cx={cx(i) + 30} cy={172} r={16} label="" />
+          <text x={cx(i)} y={208} textAnchor="middle" className="dsa-idx">pods</text>
+        </g>)}
+      </>,
+      caption: { en: 'The control plane schedules pods onto worker nodes and keeps the cluster in its desired state.', bn: 'কন্ট্রোল প্লেন পডকে ওয়ার্কার নোডে শিডিউল করে ও ক্লাস্টারকে কাঙ্ক্ষিত অবস্থায় রাখে।' },
+    }
+  },
+  'k8s-desired': (step, lang) => {
+    const desired = 3
+    const actual = 1 + (step % 3)
+    return {
+      view: [520, 210],
+      body: <>
+        <text x={140} y={44} textAnchor="middle" className="dsa-idx">{tr(lang, 'desired: 3', 'কাঙ্ক্ষিত: 3')}</text>
+        <text x={380} y={44} textAnchor="middle" className="dsa-idx">{tr(lang, 'actual', 'বর্তমান')}: {actual}</text>
+        {Array.from({ length: desired }).map((_, i) => <circle key={'d' + i} cx={90 + i * 52} cy={100} r={18} className="dsa-node" style={{ opacity: 0.3 }} />)}
+        {Array.from({ length: actual }).map((_, i) => <circle key={'a' + i} cx={330 + i * 52} cy={100} r={18} className="dsa-node" />)}
+        <text x={260} y={178} textAnchor="middle" className="dsa-idx">{tr(lang, 'the controller reconciles actual toward desired', 'কন্ট্রোলার বর্তমানকে কাঙ্ক্ষিতের দিকে মেলায়')}</text>
+      </>,
+      caption: { en: 'A controller constantly compares desired vs actual state and creates or deletes pods to match.', bn: 'একটি কন্ট্রোলার অবিরত কাঙ্ক্ষিত বনাম বর্তমান অবস্থা তুলনা করে ও মেলাতে পড তৈরি বা মোছে।' },
+    }
+  },
+  'k8s-pod': (step, lang) => {
+    const two = step % 2 === 1
+    return {
+      view: [480, 200],
+      body: <>
+        <rect x={80} y={40} width={320} height={118} rx="14" className="dsa-cell active" style={{ fill: 'none' }} />
+        <text x={100} y={62} className="dsa-idx">Pod</text>
+        <g><rect x={108} y={74} width={112} height={62} rx="8" className="dsa-cell" /><text x={164} y={110} textAnchor="middle" className="dsa-val" style={{ fontSize: '13px' }}>app</text></g>
+        {two && <g><rect x={258} y={74} width={112} height={62} rx="8" className="dsa-cell" /><text x={314} y={110} textAnchor="middle" className="dsa-val" style={{ fontSize: '13px' }}>sidecar</text></g>}
+        <text x={240} y={182} textAnchor="middle" className="dsa-idx">{tr(lang, 'containers in a pod share network and storage', 'পডের কন্টেইনার নেটওয়ার্ক ও স্টোরেজ শেয়ার করে')}</text>
+      </>,
+      caption: { en: 'A pod wraps one or more containers that share the same network and storage.', bn: 'একটি পড এক বা একাধিক কন্টেইনার মোড়ায় যারা একই নেটওয়ার্ক ও স্টোরেজ শেয়ার করে।' },
+    }
+  },
+  'k8s-service': (step, lang) => {
+    const pods = [[430, 60], [430, 118], [430, 176]]
+    const cur = step % 3
+    return {
+      view: [560, 230],
+      body: <>
+        <g transform="translate(60 88)"><rect width="160" height="60" rx="10" className="dsa-cell active" /><text x="80" y="30" textAnchor="middle" className="dsa-val">Service</text><text x="80" y="48" textAnchor="middle" className="dsa-idx">ClusterIP</text></g>
+        {pods.map(([x, y], i) => <g key={i}><Edge id="flow" x1={220} y1={118} x2={x - 24} y2={y} arrow active={i === cur} /><Node cx={x} cy={y} r={22} label="pod" /></g>)}
+        <text x={280} y={220} textAnchor="middle" className="dsa-idx">{tr(lang, 'a Service load-balances to matching pods', 'একটি Service মেলা পডে লোড-ব্যালান্স করে')}</text>
+      </>,
+      caption: { en: 'A Service gives a stable address that load-balances across the pods it selects.', bn: 'একটি Service একটি স্থিতিশীল ঠিকানা দেয় যা তার নির্বাচিত পডে লোড-ব্যালান্স করে।' },
+    }
+  },
+  'k8s-ingress': (step, lang) => {
+    const cur = step % 2
+    return {
+      view: [600, 200],
+      body: <>
+        <g transform="translate(30 78)"><rect width="120" height="50" rx="10" className="dsa-cell" /><text x="60" y="30" textAnchor="middle" className="dsa-val" style={{ fontSize: '13px' }}>{tr(lang, 'internet', 'ইন্টারনেট')}</text></g>
+        <g transform="translate(220 72)"><rect width="130" height="60" rx="10" className="dsa-cell active" /><text x="65" y="36" textAnchor="middle" className="dsa-val">Ingress</text></g>
+        <g transform="translate(430 30)"><rect width="150" height="46" rx="10" className={`dsa-cell ${cur === 0 ? 'active' : ''}`} /><text x="75" y="28" textAnchor="middle" className="dsa-val" style={{ fontSize: '12px' }}>/app → svc-a</text></g>
+        <g transform="translate(430 122)"><rect width="150" height="46" rx="10" className={`dsa-cell ${cur === 1 ? 'active' : ''}`} /><text x="75" y="28" textAnchor="middle" className="dsa-val" style={{ fontSize: '12px' }}>/api → svc-b</text></g>
+        <Edge id="flow" x1={150} y1={103} x2={220} y2={102} arrow active />
+        <Edge id="flow" x1={350} y1={102} x2={430} y2={53} arrow active={cur === 0} />
+        <Edge id="flow" x1={350} y1={102} x2={430} y2={145} arrow active={cur === 1} />
+      </>,
+      caption: { en: 'Ingress routes external HTTP traffic by host and path to different internal Services.', bn: 'Ingress বাহ্যিক HTTP ট্রাফিক হোস্ট ও পাথ অনুযায়ী ভিন্ন অভ্যন্তরীণ Service-এ পাঠায়।' },
+    }
+  },
+  'k8s-rollout': (step, lang) => {
+    const n = 4
+    const updated = step % (n + 1)
+    return {
+      view: [520, 170],
+      body: <>
+        {Array.from({ length: n }).map((_, i) => <g key={i}><rect x={60 + i * 100} y={55} width={80} height={56} rx="10" className={`dsa-cell ${i < updated ? 'active' : ''}`} /><text x={100 + i * 100} y={88} textAnchor="middle" className="dsa-val" style={{ fontSize: '13px' }}>{i < updated ? 'v2' : 'v1'}</text></g>)}
+        <text x={260} y={140} textAnchor="middle" className="dsa-idx">{tr(lang, 'pods are replaced v1 → v2 one at a time', 'পড এক এক করে v1 → v2 প্রতিস্থাপিত হয়')}</text>
+      </>,
+      caption: { en: 'A rolling update replaces pods gradually, keeping the app available the whole time.', bn: 'রোলিং আপডেট ধীরে ধীরে পড প্রতিস্থাপন করে, পুরো সময় অ্যাপ চালু রাখে।' },
+    }
+  },
   'binary-search': (step, lang) => {
     const arr = [1, 3, 5, 7, 9, 11, 13, 15]
     const states = [[0, 3, 7], [4, 5, 7], [6, 6, 7]]
@@ -728,7 +818,7 @@ const renderers = {
   },
 }
 
-const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6, 'net-stack': 4, 'net-handshake': 4, 'net-hops': 4, 'net-request': 2, 'net-address': 1, 'lx-prompt': 4, 'lx-tree': 3, 'lx-pipe': 4, 'lx-perms': 3, 'lx-process': 4, 'dk-layers': 4, 'dk-lifecycle': 4, 'dk-build': 5, 'dk-registry': 2, 'dk-compose': 3, 'dk-volume': 2 }
+const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6, 'net-stack': 4, 'net-handshake': 4, 'net-hops': 4, 'net-request': 2, 'net-address': 1, 'lx-prompt': 4, 'lx-tree': 3, 'lx-pipe': 4, 'lx-perms': 3, 'lx-process': 4, 'dk-layers': 4, 'dk-lifecycle': 4, 'dk-build': 5, 'dk-registry': 2, 'dk-compose': 3, 'dk-volume': 2, 'k8s-cluster': 3, 'k8s-desired': 3, 'k8s-pod': 2, 'k8s-service': 3, 'k8s-ingress': 2, 'k8s-rollout': 5 }
 
 function DsaDiagram({ kind, lang, title }) {
   const renderer = renderers[kind] || renderers['algo-flow']
@@ -761,7 +851,7 @@ function DsaDiagram({ kind, lang, title }) {
 const SD_FLOW_KINDS = new Set(['request', 'loadbalancer', 'cdn', 'cache', 'database', 'queue', 'sharding', 'url', 'chat', 'feed', 'video'])
 
 export default function CourseDiagram({ kind, courseId, lang, title }) {
-  if (courseId === 'dsa' || courseId === 'git' || courseId === 'networking' || courseId === 'linux' || courseId === 'docker' || renderers[kind]) return <DsaDiagram kind={kind} lang={lang} title={title} />
+  if (courseId === 'dsa' || courseId === 'git' || courseId === 'networking' || courseId === 'linux' || courseId === 'docker' || courseId === 'kubernetes' || renderers[kind]) return <DsaDiagram kind={kind} lang={lang} title={title} />
   if (SD_FLOW_KINDS.has(kind) || !kind) return <ArchitectureDiagram kind={kind} lang={lang} title={title} />
   return <ArchitectureDiagram kind={kind} lang={lang} title={title} />
 }

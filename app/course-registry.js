@@ -4,6 +4,7 @@ import { gitModules, gitTopics, gitLabs } from './courses/git.js'
 import { netModules, netTopics, netLabs } from './courses/networking.js'
 import { linuxModules, linuxTopics, linuxLabs } from './courses/linux.js'
 import { dockerModules, dockerTopics, dockerLabs } from './courses/docker.js'
+import { k8sModules, k8sTopics, k8sLabs } from './courses/kubernetes.js'
 import { networkingModule, networkingTopics } from './courses/system-design-networking.js'
 
 // Tag content with its owning course without mutating the source arrays
@@ -84,11 +85,14 @@ export const courses = [
     labs: dockerLabs,
   },
   {
-    id: 'kubernetes', available: false,
+    id: 'kubernetes', available: true,
     title: l('Kubernetes', 'কুবারনেটিস'),
     tagline: l('Kubernetes', 'কুবারনেটিস'),
     summary: l('Orchestrate containers with pods, deployments, services, and scaling.', 'পড, ডিপ্লয়মেন্ট, সার্ভিস ও স্কেলিং দিয়ে কন্টেইনার অর্কেস্ট্রেট করুন।'),
     mark: 'K', color: '#7c3aed', accent: '#f0edff', icon: '⎈',
+    modules: tag('kubernetes', k8sModules),
+    topics: tag('kubernetes', k8sTopics),
+    labs: k8sLabs,
   },
 ]
 
