@@ -269,6 +269,80 @@ const renderers = {
       caption: { en: 'Big-O compares how cost grows with input size — the gap explodes as n rises.', bn: 'বিগ-ও ইনপুট বাড়লে খরচ কীভাবে বাড়ে তা তুলনা করে—n বাড়লে পার্থক্য বিস্ফোরিত হয়।' },
     }
   },
+  // ── Networking renderers ───────────────────────────────────────────────────
+  'net-stack': (step, lang) => {
+    const layers = [tr(lang, 'Application', 'অ্যাপ্লিকেশন'), tr(lang, 'Transport', 'ট্রান্সপোর্ট'), tr(lang, 'Internet', 'ইন্টারনেট'), tr(lang, 'Link', 'লিংক')]
+    const cur = step % layers.length
+    return {
+      view: [420, 262],
+      body: <>
+        {layers.slice(0, -1).map((_, i) => <Edge key={i} id="flow" x1={210} y1={30 + i * 54 + 44} x2={210} y2={30 + (i + 1) * 54} arrow active={cur > i} />)}
+        {layers.map((lab, i) => <g key={i}><rect x={80} y={30 + i * 54} width={260} height={44} rx="8" className={`dsa-cell ${i === cur ? 'active' : ''}`} /><text x={210} y={57 + i * 54} textAnchor="middle" className="dsa-val">{lab}</text></g>)}
+        <text x={210} y={250} textAnchor="middle" className="dsa-idx">{tr(lang, 'each layer adds its header on the way down', 'নিচে নামার পথে প্রতিটি স্তর হেডার যোগ করে')}</text>
+      </>,
+      caption: { en: 'Data moves down the layered stack to be sent; each layer adds its own header.', bn: 'পাঠাতে ডেটা স্তরিত স্ট্যাক ধরে নিচে নামে; প্রতিটি স্তর নিজের হেডার যোগ করে।' },
+    }
+  },
+  'net-handshake': (step, lang) => {
+    const msgs = [{ label: 'SYN', dir: 1 }, { label: 'SYN-ACK', dir: -1 }, { label: 'ACK', dir: 1 }]
+    const shown = step % 4
+    return {
+      view: [560, 230],
+      body: <>
+        <g transform="translate(40 40)"><rect width="120" height="150" rx="10" className="dsa-cell" /><text x="60" y="80" textAnchor="middle" className="dsa-val">{tr(lang, 'Client', 'ক্লায়েন্ট')}</text></g>
+        <g transform="translate(400 40)"><rect width="120" height="150" rx="10" className="dsa-cell" /><text x="60" y="80" textAnchor="middle" className="dsa-val">{tr(lang, 'Server', 'সার্ভার')}</text></g>
+        {msgs.map((m, i) => i < shown ? <g key={i}>
+          <Edge id="flow" x1={m.dir > 0 ? 160 : 400} y1={80 + i * 40} x2={m.dir > 0 ? 400 : 160} y2={80 + i * 40} arrow active />
+          <text x={280} y={72 + i * 40} textAnchor="middle" className="dsa-weight">{m.label}</text>
+        </g> : null)}
+        <text x={280} y={216} textAnchor="middle" className="dsa-idx">SYN → SYN-ACK → ACK</text>
+      </>,
+      caption: { en: 'TCP opens a connection with a three-way handshake: SYN, SYN-ACK, ACK.', bn: 'TCP তিন-ধাপ হ্যান্ডশেকে সংযোগ খোলে: SYN, SYN-ACK, ACK।' },
+    }
+  },
+  'net-hops': (step, lang) => {
+    const nodes = ['PC', 'R1', 'R2', 'WWW']
+    const cx = (i) => 70 + i * 175
+    const cur = step % nodes.length
+    return {
+      view: [640, 160],
+      body: <>
+        {nodes.slice(0, -1).map((_, i) => <Edge key={i} id="flow" x1={cx(i) + 34} y1={70} x2={cx(i + 1) - 34} y2={70} arrow active={cur > i} />)}
+        {nodes.map((lab, i) => <Node key={i} cx={cx(i)} cy={70} r={34} label={lab} active={i === cur} dim={i < cur} />)}
+        <text x={320} y={140} textAnchor="middle" className="dsa-idx">{tr(lang, 'each router forwards the packet one hop closer', 'প্রতিটি রাউটার প্যাকেটকে এক হপ কাছে পাঠায়')}</text>
+      </>,
+      caption: { en: 'Routers forward each packet hop by hop toward its destination network.', bn: 'রাউটার প্রতিটি প্যাকেট হপ-বাই-হপ গন্তব্য নেটওয়ার্কের দিকে পাঠায়।' },
+    }
+  },
+  'net-request': (step, lang) => {
+    const reqPhase = step % 2 === 0
+    return {
+      view: [620, 180],
+      body: <>
+        <g transform="translate(50 50)"><rect width="190" height="80" rx="12" className={`dsa-cell ${reqPhase ? 'active' : ''}`} /><text x="95" y="46" textAnchor="middle" className="dsa-val">{tr(lang, 'Client', 'ক্লায়েন্ট')}</text></g>
+        <g transform="translate(380 50)"><rect width="190" height="80" rx="12" className={`dsa-cell ${reqPhase ? '' : 'active'}`} /><text x="95" y="46" textAnchor="middle" className="dsa-val">{tr(lang, 'Server', 'সার্ভার')}</text></g>
+        <Edge id="flow" x1={240} y1={78} x2={380} y2={78} arrow active={reqPhase} />
+        <text x={310} y={66} textAnchor="middle" className="dsa-weight">{reqPhase ? tr(lang, 'request', 'রিকোয়েস্ট') : ''}</text>
+        <Edge id="flow" x1={380} y1={112} x2={240} y2={112} arrow active={!reqPhase} />
+        <text x={310} y={135} textAnchor="middle" className="dsa-weight">{reqPhase ? '' : tr(lang, 'response', 'রেসপন্স')}</text>
+      </>,
+      caption: { en: 'The client sends a request; the server processes it and returns a response.', bn: 'ক্লায়েন্ট একটি রিকোয়েস্ট পাঠায়; সার্ভার তা প্রসেস করে রেসপন্স ফেরত দেয়।' },
+    }
+  },
+  'net-address': (step, lang) => {
+    const octets = ['192', '168', '1', '42']
+    const netCount = 3
+    return {
+      view: [560, 170],
+      body: <>
+        <text x={280} y={34} textAnchor="middle" className="dsa-weight">192.168.1.42 / 24</text>
+        {octets.map((o, i) => <g key={i}><rect x={40 + i * 130} y={50} width={110} height={50} rx="8" className={`dsa-cell ${i < netCount ? 'active' : ''}`} /><text x={40 + i * 130 + 55} y={82} textAnchor="middle" className="dsa-val">{o}</text></g>)}
+        <text x={40 + netCount * 130 / 2} y={130} textAnchor="middle" className="dsa-idx">{tr(lang, 'network', 'নেটওয়ার্ক')}</text>
+        <text x={40 + netCount * 130 + 55} y={130} textAnchor="middle" className="dsa-idx">{tr(lang, 'host', 'হোস্ট')}</text>
+      </>,
+      caption: { en: 'A subnet mask (/24) splits an IP into a network part and a host part.', bn: 'একটি সাবনেট মাস্ক (/24) IP-কে নেটওয়ার্ক অংশ ও হোস্ট অংশে ভাগ করে।' },
+    }
+  },
   'binary-search': (step, lang) => {
     const arr = [1, 3, 5, 7, 9, 11, 13, 15]
     const states = [[0, 3, 7], [4, 5, 7], [6, 6, 7]]
@@ -490,7 +564,7 @@ const renderers = {
   },
 }
 
-const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6 }
+const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6, 'net-stack': 4, 'net-handshake': 4, 'net-hops': 4, 'net-request': 2, 'net-address': 1 }
 
 function DsaDiagram({ kind, lang, title }) {
   const renderer = renderers[kind] || renderers['algo-flow']
@@ -523,7 +597,7 @@ function DsaDiagram({ kind, lang, title }) {
 const SD_FLOW_KINDS = new Set(['request', 'loadbalancer', 'cdn', 'cache', 'database', 'queue', 'sharding', 'url', 'chat', 'feed', 'video'])
 
 export default function CourseDiagram({ kind, courseId, lang, title }) {
-  if (courseId === 'dsa' || courseId === 'git' || renderers[kind]) return <DsaDiagram kind={kind} lang={lang} title={title} />
+  if (courseId === 'dsa' || courseId === 'git' || courseId === 'networking' || renderers[kind]) return <DsaDiagram kind={kind} lang={lang} title={title} />
   if (SD_FLOW_KINDS.has(kind) || !kind) return <ArchitectureDiagram kind={kind} lang={lang} title={title} />
   return <ArchitectureDiagram kind={kind} lang={lang} title={title} />
 }

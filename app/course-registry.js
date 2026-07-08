@@ -1,6 +1,7 @@
 import { l, modules as sdModules, topics as sdTopics, labs as sdLabs } from './data.js'
 import { dsaModules, dsaTopics, dsaLabs } from './courses/dsa.js'
 import { gitModules, gitTopics, gitLabs } from './courses/git.js'
+import { netModules, netTopics, netLabs } from './courses/networking.js'
 import { networkingModule, networkingTopics } from './courses/system-design-networking.js'
 
 // Tag content with its owning course without mutating the source arrays
@@ -51,11 +52,14 @@ export const courses = [
     labs: gitLabs,
   },
   {
-    id: 'networking', available: false,
+    id: 'networking', available: true,
     title: l('Computer Networking', 'কম্পিউটার নেটওয়ার্কিং'),
     tagline: l('Networking', 'নেটওয়ার্কিং'),
     summary: l('From IP, TCP, and DNS to HTTP, TLS, and how the internet actually moves packets.', 'IP, TCP ও DNS থেকে HTTP, TLS এবং ইন্টারনেট আসলে কীভাবে প্যাকেট সরায়।'),
     mark: 'N', color: '#188cbd', accent: '#e7f5fb', icon: '⇄',
+    modules: tag('networking', netModules),
+    topics: tag('networking', netTopics),
+    labs: netLabs,
   },
   {
     id: 'linux', available: false,
