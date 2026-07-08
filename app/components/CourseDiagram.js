@@ -343,6 +343,84 @@ const renderers = {
       caption: { en: 'A subnet mask (/24) splits an IP into a network part and a host part.', bn: 'একটি সাবনেট মাস্ক (/24) IP-কে নেটওয়ার্ক অংশ ও হোস্ট অংশে ভাগ করে।' },
     }
   },
+  // ── Linux renderers (terminal-themed) ──────────────────────────────────────
+  'lx-prompt': (step, lang) => {
+    const cmds = ['ls -la', 'cd /var/log', 'cat syslog', 'grep err *.log']
+    const cmd = cmds[step % cmds.length]
+    return {
+      view: [520, 168],
+      body: <>
+        <rect x={30} y={26} width={460} height={118} rx="10" style={{ fill: '#0d1117' }} />
+        <circle cx={50} cy={44} r={5} style={{ fill: '#ec6a5e' }} /><circle cx={66} cy={44} r={5} style={{ fill: '#f4bf4f' }} /><circle cx={82} cy={44} r={5} style={{ fill: '#61c554' }} />
+        <text x={48} y={90} style={{ fill: '#61c554', fontFamily: 'monospace', fontSize: '15px' }}>$</text>
+        <text x={66} y={90} style={{ fill: '#cdd6e3', fontFamily: 'monospace', fontSize: '15px' }}>{cmd}</text>
+        <text x={48} y={118} style={{ fill: '#768390', fontFamily: 'monospace', fontSize: '11px' }}>{tr(lang, '# the shell runs each command you type', '# শেল আপনার টাইপ করা প্রতিটি কমান্ড চালায়')}</text>
+      </>,
+      caption: { en: 'The shell reads a typed command and asks the kernel to run it.', bn: 'শেল একটি টাইপ করা কমান্ড পড়ে ও কার্নেলকে চালাতে বলে।' },
+    }
+  },
+  'lx-tree': (step, lang) => {
+    const N = [[250, 34, '/'], [110, 110, 'home'], [250, 110, 'etc'], [390, 110, 'var'], [110, 186, 'user'], [390, 186, 'log']]
+    const E = [[0, 1], [0, 2], [0, 3], [1, 4], [3, 5]]
+    const path = [0, 1, 4]
+    const hi = path[step % path.length]
+    return {
+      view: [500, 226],
+      body: <>
+        {E.map(([a, b], i) => <Edge key={i} x1={N[a][0]} y1={N[a][1]} x2={N[b][0]} y2={N[b][1]} active={b === hi} />)}
+        {N.map(([x, y, lab], i) => <Node key={i} cx={x} cy={y} r={24} label={lab} active={i === hi} />)}
+        <text x={250} y={216} textAnchor="middle" className="dsa-idx">{tr(lang, '/home/user is a path down the tree', '/home/user গাছের নিচে একটি পথ')}</text>
+      </>,
+      caption: { en: 'Everything lives under a single root /, in standard directories like /home and /var.', bn: 'সবকিছু একটি একক রুট /-এর নিচে, /home ও /var-এর মতো প্রমিত ডিরেক্টরিতে থাকে।' },
+    }
+  },
+  'lx-pipe': (step, lang) => {
+    const stages = ['cat log', 'grep err', 'sort', 'uniq -c']
+    const cur = step % stages.length
+    return {
+      view: [640, 130],
+      body: <>
+        {stages.slice(0, -1).map((_, i) => <Edge key={i} id="flow" x1={30 + i * 152 + 120} y1={58} x2={30 + (i + 1) * 152} y2={58} arrow active={cur > i} />)}
+        {stages.map((lab, i) => <g key={i} transform={`translate(${30 + i * 152} 34)`}><rect width="120" height="48" rx="8" className={`dsa-cell ${cur === i ? 'active' : ''}`} /><text x="60" y="30" textAnchor="middle" className="dsa-val" style={{ fontFamily: 'monospace', fontSize: '13px' }}>{lab}</text></g>)}
+        <text x={320} y={112} textAnchor="middle" className="dsa-idx">{tr(lang, 'each | feeds one command’s output into the next', 'প্রতিটি | এক কমান্ডের আউটপুট পরেরটিতে দেয়')}</text>
+      </>,
+      caption: { en: 'A pipe (|) feeds one command’s output straight into the next command.', bn: 'একটি পাইপ (|) এক কমান্ডের আউটপুট সরাসরি পরের কমান্ডে দেয়।' },
+    }
+  },
+  'lx-perms': (step, lang) => {
+    const groups = [tr(lang, 'owner', 'মালিক'), tr(lang, 'group', 'গ্রুপ'), tr(lang, 'others', 'অন্যরা')]
+    const bits = ['r', 'w', 'x']
+    const cur = step % 3
+    return {
+      view: [560, 200],
+      body: <>
+        {groups.map((g, gi) => <g key={gi}>
+          <text x={70 + gi * 170 + 55} y={48} textAnchor="middle" className="dsa-idx">{g}</text>
+          {bits.map((b, bi) => <g key={bi}><rect x={70 + gi * 170 + bi * 40} y={58} width={34} height={44} rx="6" className={`dsa-cell ${gi === cur ? 'active' : ''}`} /><text x={70 + gi * 170 + bi * 40 + 17} y={86} textAnchor="middle" className="dsa-val" style={{ fontFamily: 'monospace' }}>{b}</text></g>)}
+        </g>)}
+        <text x={280} y={144} textAnchor="middle" className="dsa-weight" style={{ fontFamily: 'monospace' }}>rwxr-xr--  (754)</text>
+        <text x={280} y={176} textAnchor="middle" className="dsa-idx">{tr(lang, 'read, write, execute — for owner, group, others', 'পড়া, লেখা, চালানো—মালিক, গ্রুপ, অন্যদের জন্য')}</text>
+      </>,
+      caption: { en: 'Each file has read/write/execute bits for its owner, group, and everyone else.', bn: 'প্রতিটি ফাইলের মালিক, গ্রুপ ও বাকি সবার জন্য পড়া/লেখা/চালানো বিট আছে।' },
+    }
+  },
+  'lx-process': (step, lang) => {
+    const procs = [['1', 'systemd'], ['412', 'sshd'], ['879', 'nginx'], ['1203', 'bash']]
+    const cur = step % procs.length
+    return {
+      view: [520, 220],
+      body: <>
+        <text x={70} y={42} className="dsa-idx">PID</text><text x={170} y={42} className="dsa-idx">{tr(lang, 'COMMAND', 'কমান্ড')}</text>
+        {procs.map(([pid, name], i) => <g key={i}>
+          <rect x={50} y={52 + i * 40} width={420} height={34} rx="6" className={`dsa-cell ${i === cur ? 'active' : ''}`} />
+          <text x={70} y={74 + i * 40} className="dsa-val" style={{ fontFamily: 'monospace', fontSize: '13px' }}>{pid}</text>
+          <text x={170} y={74 + i * 40} className="dsa-val" style={{ fontFamily: 'monospace', fontSize: '13px' }}>{name}</text>
+        </g>)}
+        <text x={260} y={210} textAnchor="middle" className="dsa-idx">{tr(lang, 'each process has a PID you can signal or kill', 'প্রতিটি প্রসেসের একটি PID আছে যাকে signal/kill করা যায়')}</text>
+      </>,
+      caption: { en: 'Every running process has a PID; ps lists them and you signal them by PID.', bn: 'প্রতিটি চলমান প্রসেসের একটি PID আছে; ps তালিকা করে ও PID দিয়ে signal দেওয়া যায়।' },
+    }
+  },
   'binary-search': (step, lang) => {
     const arr = [1, 3, 5, 7, 9, 11, 13, 15]
     const states = [[0, 3, 7], [4, 5, 7], [6, 6, 7]]
@@ -564,7 +642,7 @@ const renderers = {
   },
 }
 
-const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6, 'net-stack': 4, 'net-handshake': 4, 'net-hops': 4, 'net-request': 2, 'net-address': 1 }
+const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6, 'net-stack': 4, 'net-handshake': 4, 'net-hops': 4, 'net-request': 2, 'net-address': 1, 'lx-prompt': 4, 'lx-tree': 3, 'lx-pipe': 4, 'lx-perms': 3, 'lx-process': 4 }
 
 function DsaDiagram({ kind, lang, title }) {
   const renderer = renderers[kind] || renderers['algo-flow']
@@ -597,7 +675,7 @@ function DsaDiagram({ kind, lang, title }) {
 const SD_FLOW_KINDS = new Set(['request', 'loadbalancer', 'cdn', 'cache', 'database', 'queue', 'sharding', 'url', 'chat', 'feed', 'video'])
 
 export default function CourseDiagram({ kind, courseId, lang, title }) {
-  if (courseId === 'dsa' || courseId === 'git' || courseId === 'networking' || renderers[kind]) return <DsaDiagram kind={kind} lang={lang} title={title} />
+  if (courseId === 'dsa' || courseId === 'git' || courseId === 'networking' || courseId === 'linux' || renderers[kind]) return <DsaDiagram kind={kind} lang={lang} title={title} />
   if (SD_FLOW_KINDS.has(kind) || !kind) return <ArchitectureDiagram kind={kind} lang={lang} title={title} />
   return <ArchitectureDiagram kind={kind} lang={lang} title={title} />
 }

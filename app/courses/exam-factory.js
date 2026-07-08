@@ -11,11 +11,12 @@ const l = (en, bn) => ({ en, bn })
 const VALUE_POOLS = {
   dsa: ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)', 'O(n²)', 'O(V + E)', 'O(n + k)'],
   git: ['git status', 'git add -A', 'git commit --amend', 'git push --force-with-lease', 'git switch -c <name>', 'git merge <branch>', 'git rebase main', 'git reset --hard HEAD~1', 'git stash pop', 'git log --oneline --graph', 'git remote -v', 'git revert <sha>'],
+  linux: ['ls -la', 'cd ~', 'pwd', 'cp -r a b', 'mv a b', 'rm -rf dir', 'grep -i pattern', 'chmod 644 file', 'ps aux', 'kill -9 <pid>', 'systemctl status x', 'df -h', 'tail -f file', 'apt install pkg'],
   networking: [],
   'system-design': [],
 }
 // Subjects whose reference rows carry a concrete value (command/fact) rather than a Big-O cost.
-const VALUE_SUBJECTS = new Set(['git', 'networking'])
+const VALUE_SUBJECTS = new Set(['git', 'linux', 'networking'])
 
 const EXPL = {
   interview: l('Interviewers value a clear mechanism, the key decision, and an explicit trade-off over memorized syntax.', 'ইন্টারভিউয়ার মুখস্থ সিনট্যাক্সের চেয়ে স্পষ্ট প্রক্রিয়া, মূল সিদ্ধান্ত ও স্পষ্ট ট্রেড-অফকে বেশি মূল্য দেন।'),
@@ -85,7 +86,7 @@ export function buildExam(topic, { distractors, subject = 'system-design' } = {}
     const answer = l(value, value)
     const others = valuePool.filter((v) => v !== value)
     const wrongs = pickThree(others.length ? others : ['—', '≈', '?'], t.order + qi).map((v) => l(v, v))
-    const prompt = subject === 'git'
+    const prompt = subject === 'git' || subject === 'linux'
       ? l(`Which command matches this goal: ${row.op.en}?`, `এই লক্ষ্যের সঙ্গে কোন কমান্ড মেলে: ${row.op.bn}?`)
       : subject === 'networking'
         ? l(`What is the standard value for: ${row.op.en}?`, `এর প্রমিত মান কী: ${row.op.bn}?`)

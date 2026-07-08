@@ -2,6 +2,7 @@ import { l, modules as sdModules, topics as sdTopics, labs as sdLabs } from './d
 import { dsaModules, dsaTopics, dsaLabs } from './courses/dsa.js'
 import { gitModules, gitTopics, gitLabs } from './courses/git.js'
 import { netModules, netTopics, netLabs } from './courses/networking.js'
+import { linuxModules, linuxTopics, linuxLabs } from './courses/linux.js'
 import { networkingModule, networkingTopics } from './courses/system-design-networking.js'
 
 // Tag content with its owning course without mutating the source arrays
@@ -62,11 +63,14 @@ export const courses = [
     labs: netLabs,
   },
   {
-    id: 'linux', available: false,
+    id: 'linux', available: true,
     title: l('Linux Fundamentals', 'লিনাক্স ফান্ডামেন্টালস'),
     tagline: l('Linux', 'লিনাক্স'),
     summary: l('The shell, filesystem, permissions, processes, and everyday command-line workflows.', 'শেল, ফাইলসিস্টেম, পারমিশন, প্রসেস ও প্রতিদিনের কমান্ড-লাইন ওয়ার্কফ্লো।'),
     mark: 'L', color: '#d97706', accent: '#fff3e0', icon: '❯',
+    modules: tag('linux', linuxModules),
+    topics: tag('linux', linuxTopics),
+    labs: linuxLabs,
   },
   {
     id: 'docker', available: false,
