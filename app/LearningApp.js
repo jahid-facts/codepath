@@ -537,7 +537,8 @@ function Lesson({ topicId, progress, setProgress, lang, openTopic, navigate }) {
         <LessonSection number="03" label={lang === 'bn' ? 'মূল ধারণা' : 'Core idea'}><p className="lead-paragraph">{text(topic.insight)}</p><div className="principle-card"><strong>{lang === 'bn' ? 'মূল নীতি' : 'Design principle'}</strong><p>{text(topic.action)}</p></div></LessonSection>
         <LessonSection number="04" label={course.id === 'system-design' ? (lang === 'bn' ? 'ভিজ্যুয়াল ফ্লো' : 'Visual request flow') : (lang === 'bn' ? 'ভিজ্যুয়াল ব্যাখ্যা' : 'Visual walkthrough')}><CourseDiagram kind={topic.diagram} courseId={course.id} lang={lang} title={topic.title} /></LessonSection>
         <LessonSection number="05" label={course.id === 'system-design' ? (lang === 'bn' ? 'অনুরোধের পথ' : 'Walk through the flow') : (lang === 'bn' ? 'ধাপে ধাপে' : 'Step by step')}><ol className="flow-steps"><li><b>1</b><span>{text(topic.insight)}</span></li><li><b>2</b><span>{text(topic.action)}</span></li><li><b>3</b><span>{course.id === 'system-design' ? (lang === 'bn' ? 'সিস্টেম ফল দেয় এবং লেটেন্সি, এরর ও ক্ষমতা পরিমাপ করে।' : 'The system returns a result and measures latency, errors, and capacity.') : (lang === 'bn' ? 'খরচ ও ট্রেড-অফ যাচাই করে সেরা বিকল্পটি বাছুন।' : 'Weigh the cost and trade-off, then choose the best alternative.')}</span></li></ol></LessonSection>
-        {topic.complexity?.length > 0 && <LessonSection number="•" label={course.id === 'git' || course.id === 'linux' ? (lang === 'bn' ? 'জরুরি কমান্ড' : 'Key commands') : course.id === 'networking' ? (lang === 'bn' ? 'দ্রুত রেফারেন্স' : 'Quick reference') : (lang === 'bn' ? 'জটিলতা' : 'Complexity')}><ComplexityTable rows={topic.complexity} lang={lang} courseId={course.id} /></LessonSection>}
+        {topic.complexity?.length > 0 && <LessonSection number="•" label={course.id === 'git' || course.id === 'linux' || course.id === 'docker' ? (lang === 'bn' ? 'জরুরি কমান্ড' : 'Key commands') : course.id === 'networking' ? (lang === 'bn' ? 'দ্রুত রেফারেন্স' : 'Quick reference') : (lang === 'bn' ? 'জটিলতা' : 'Complexity')}><ComplexityTable rows={topic.complexity} lang={lang} courseId={course.id} /></LessonSection>}
+        {topic.example && <LessonSection number="•" label={lang === 'bn' ? 'হাতে-কলমে উদাহরণ' : 'Hands-on example'}><LessonExample example={topic.example} lang={lang} /></LessonSection>}
         {topic.deepDive && <FlagshipDeepDive key={topic.id} content={topic.deepDive} lang={lang} />}
         <LessonSection number="06" label={lang === 'bn' ? 'ট্রেড-অফ' : 'Trade-offs'}><div className="pros-cons"><div><strong>＋ {lang === 'bn' ? 'কেন কার্যকর' : 'Why it helps'}</strong><p>{text(topic.advantages)}</p></div><div><strong>△ {lang === 'bn' ? 'মূল মূল্য' : 'The cost'}</strong><p>{text(topic.tradeoff)}</p></div></div></LessonSection>
         <DecisionCheckpoint key={topic.id} topic={topic} lang={lang} />
@@ -558,12 +559,28 @@ function LessonSection({ number, label, children }) {
 }
 
 function ComplexityTable({ rows, lang, courseId }) {
-  const head = courseId === 'git' || courseId === 'linux'
+  const head = courseId === 'git' || courseId === 'linux' || courseId === 'docker'
     ? (lang === 'bn' ? ['লক্ষ্য', 'কমান্ড'] : ['Goal', 'Command'])
     : courseId === 'networking'
       ? (lang === 'bn' ? ['বিষয়', 'মান'] : ['Item', 'Value'])
       : (lang === 'bn' ? ['অপারেশন', 'জটিলতা'] : ['Operation', 'Complexity'])
   return <div className="complexity-table"><div className="complexity-head"><span>{head[0]}</span><span>{head[1]}</span></div>{rows.map((row, index) => <div className="complexity-row" key={index}><span>{t(row.op, lang)}</span><code>{row.value}</code></div>)}</div>
+}
+
+function LessonExample({ example, lang }) {
+  return <div className="code-example" style={{ border: '1px solid var(--border, #2a2f3a)', borderRadius: '12px', overflow: 'hidden', margin: '4px 0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#161b22', padding: '10px 16px', borderBottom: '1px solid #23292f' }}>
+      <span style={{ display: 'flex', gap: '6px' }} aria-hidden="true">
+        <i style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#ec6a5e' }} />
+        <i style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#f4bf4f' }} />
+        <i style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#61c554' }} />
+      </span>
+      <strong style={{ color: '#cdd6e3', fontSize: '.9rem', fontWeight: 600, flex: 1 }}>{t(example.title, lang)}</strong>
+      <span style={{ fontFamily: 'monospace', fontSize: '.72rem', color: '#768390', textTransform: 'lowercase', letterSpacing: '.04em' }}>{example.lang}</span>
+    </div>
+    <pre style={{ margin: 0, background: '#0d1117', color: '#cdd6e3', fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace', fontSize: '.82rem', lineHeight: 1.7, padding: '16px', overflowX: 'auto', tabSize: 2 }}><code>{example.code}</code></pre>
+    {example.note && <p style={{ margin: 0, padding: '11px 16px', background: '#12161c', color: '#9aa4b2', fontSize: '.85rem', borderTop: '1px solid #23292f' }}>{t(example.note, lang)}</p>}
+  </div>
 }
 
 function FlagshipDeepDive({ content, lang }) {

@@ -421,6 +421,92 @@ const renderers = {
       caption: { en: 'Every running process has a PID; ps lists them and you signal them by PID.', bn: 'প্রতিটি চলমান প্রসেসের একটি PID আছে; ps তালিকা করে ও PID দিয়ে signal দেওয়া যায়।' },
     }
   },
+  // ── Docker renderers ───────────────────────────────────────────────────────
+  'dk-layers': (step, lang) => {
+    const layers = [
+      { label: tr(lang, 'base image (FROM)', 'বেস ইমেজ (FROM)'), ro: true },
+      { label: tr(lang, 'dependencies (RUN)', 'ডিপেন্ডেন্সি (RUN)'), ro: true },
+      { label: tr(lang, 'app code (COPY)', 'অ্যাপ কোড (COPY)'), ro: true },
+      { label: tr(lang, 'writable container layer', 'লেখনযোগ্য কন্টেইনার লেয়ার'), ro: false },
+    ]
+    const cur = step % layers.length
+    return {
+      view: [460, 250],
+      body: <>
+        {layers.map((L, i) => { const y = 200 - i * 44; return <g key={i}><rect x={90} y={y} width={280} height={40} rx="6" className={`dsa-cell ${i === cur ? 'active' : ''}`} style={L.ro ? undefined : { strokeDasharray: '5 4' }} /><text x={230} y={y + 25} textAnchor="middle" className="dsa-val" style={{ fontSize: '13px' }}>{L.label}</text></g> })}
+        <text x={230} y={238} textAnchor="middle" className="dsa-idx">{tr(lang, 'read-only layers + one writable top layer', 'রিড-অনলি লেয়ার + একটি লেখনযোগ্য টপ লেয়ার')}</text>
+      </>,
+      caption: { en: 'An image is stacked read-only layers; a container adds one writable layer on top.', bn: 'ইমেজ হলো স্তূপীকৃত রিড-অনলি লেয়ার; কন্টেইনার ওপরে একটি লেখনযোগ্য লেয়ার যোগ করে।' },
+    }
+  },
+  'dk-lifecycle': (step, lang) => {
+    const states = [tr(lang, 'created', 'তৈরি'), tr(lang, 'running', 'চলমান'), tr(lang, 'stopped', 'থামানো'), tr(lang, 'removed', 'মুছে ফেলা')]
+    const cur = step % states.length
+    return {
+      view: [660, 150],
+      body: <>
+        {states.slice(0, -1).map((_, i) => <Edge key={i} id="flow" x1={30 + i * 160 + 120} y1={60} x2={30 + (i + 1) * 160} y2={60} arrow active={cur > i} />)}
+        {states.map((s, i) => <g key={i} transform={`translate(${30 + i * 160} 36)`}><rect width="120" height="48" rx="10" className={`dsa-cell ${cur === i ? 'active' : ''}`} /><text x="60" y="30" textAnchor="middle" className="dsa-val">{s}</text></g>)}
+        <text x={330} y={118} textAnchor="middle" className="dsa-idx">{tr(lang, 'run → stop → start again, or rm to delete', 'run → stop → আবার start, বা মুছতে rm')}</text>
+      </>,
+      caption: { en: 'A container moves through created, running, stopped, and removed states.', bn: 'একটি কন্টেইনার তৈরি, চলমান, থামানো ও মুছে-ফেলা অবস্থার মধ্য দিয়ে যায়।' },
+    }
+  },
+  'dk-build': (step, lang) => {
+    const stages = ['Dockerfile', 'docker build', tr(lang, 'Image', 'ইমেজ'), 'docker run', tr(lang, 'Container', 'কন্টেইনার')]
+    const cur = step % stages.length
+    return {
+      view: [720, 130],
+      body: <>
+        {stages.slice(0, -1).map((_, i) => <Edge key={i} id="flow" x1={20 + i * 140 + 116} y1={56} x2={20 + (i + 1) * 140} y2={56} arrow active={cur > i} />)}
+        {stages.map((s, i) => <g key={i} transform={`translate(${20 + i * 140} 34)`}><rect width="116" height="46" rx="8" className={`dsa-cell ${cur === i ? 'active' : ''}`} /><text x="58" y="28" textAnchor="middle" className="dsa-val" style={{ fontSize: '12px' }}>{s}</text></g>)}
+      </>,
+      caption: { en: 'A Dockerfile builds into an image; running an image creates a container.', bn: 'একটি Dockerfile বিল্ড হয়ে ইমেজ হয়; ইমেজ চালালে কন্টেইনার তৈরি হয়।' },
+    }
+  },
+  'dk-registry': (step, lang) => {
+    const push = step % 2 === 0
+    return {
+      view: [660, 180],
+      body: <>
+        <g transform="translate(50 50)"><rect width="200" height="80" rx="12" className={`dsa-cell ${push ? 'active' : ''}`} /><text x="100" y="38" textAnchor="middle" className="dsa-val">{tr(lang, 'Local image', 'লোকাল ইমেজ')}</text><text x="100" y="60" textAnchor="middle" className="dsa-idx">docker build</text></g>
+        <g transform="translate(410 50)"><rect width="200" height="80" rx="12" className={`dsa-cell ${push ? '' : 'active'}`} /><text x="100" y="38" textAnchor="middle" className="dsa-val">{tr(lang, 'Registry', 'রেজিস্ট্রি')}</text><text x="100" y="60" textAnchor="middle" className="dsa-idx">Docker Hub</text></g>
+        <Edge id="flow" x1={255} y1={78} x2={405} y2={78} arrow active={push} />
+        <text x={330} y={64} textAnchor="middle" className="dsa-weight">{push ? 'docker push' : ''}</text>
+        <Edge id="flow" x1={405} y1={112} x2={255} y2={112} arrow active={!push} />
+        <text x={330} y={135} textAnchor="middle" className="dsa-weight">{push ? '' : 'docker pull'}</text>
+      </>,
+      caption: { en: 'docker push uploads an image to a registry; docker pull downloads it.', bn: 'docker push একটি ইমেজ রেজিস্ট্রিতে তোলে; docker pull তা নামায়।' },
+    }
+  },
+  'dk-compose': (step, lang) => {
+    const svc = [['web', 110], ['api', 330], ['db', 550]]
+    const cur = step % 3
+    return {
+      view: [640, 200],
+      body: <>
+        <rect x={40} y={40} width={560} height={90} rx="12" className="dsa-edge" style={{ fill: 'none', strokeDasharray: '6 5' }} />
+        <text x={58} y={60} className="dsa-idx">{tr(lang, 'compose network', 'compose নেটওয়ার্ক')}</text>
+        {svc.slice(0, -1).map((_, i) => <Edge key={i} x1={svc[i][1] + 50} y1={90} x2={svc[i + 1][1] - 50} y2={90} active />)}
+        {svc.map(([name, x], i) => <g key={i}><rect x={x - 50} y={62} width={100} height={56} rx="10" className={`dsa-cell ${i === cur ? 'active' : ''}`} /><text x={x} y={95} textAnchor="middle" className="dsa-val">{name}</text></g>)}
+        <text x={320} y={168} textAnchor="middle" className="dsa-idx">{tr(lang, 'one compose file defines all services', 'একটি compose ফাইল সব সার্ভিস সংজ্ঞায়িত করে')}</text>
+      </>,
+      caption: { en: 'Compose runs multiple services (web, api, db) that talk over one network.', bn: 'Compose একাধিক সার্ভিস (web, api, db) চালায় যারা এক নেটওয়ার্কে কথা বলে।' },
+    }
+  },
+  'dk-volume': (step, lang) => {
+    const cur = step % 2
+    return {
+      view: [520, 200],
+      body: <>
+        <g transform="translate(60 55)"><rect width="180" height="90" rx="12" className={`dsa-cell ${cur === 0 ? 'active' : ''}`} /><text x="90" y="52" textAnchor="middle" className="dsa-val">{tr(lang, 'Container', 'কন্টেইনার')}</text></g>
+        <g transform="translate(300 55)"><rect width="150" height="90" rx="12" className={`dsa-cell ${cur === 1 ? 'active' : ''}`} style={{ strokeDasharray: '5 4' }} /><text x="75" y="46" textAnchor="middle" className="dsa-val">{tr(lang, 'Volume', 'ভলিউম')}</text><text x="75" y="68" textAnchor="middle" className="dsa-idx">/data</text></g>
+        <Edge id="flow" x1={240} y1={100} x2={300} y2={100} arrow active />
+        <text x={260} y={180} textAnchor="middle" className="dsa-idx">{tr(lang, 'the volume keeps data even after the container is removed', 'কন্টেইনার মুছলেও ভলিউম ডেটা রাখে')}</text>
+      </>,
+      caption: { en: 'A volume stores data outside the container, so it survives restarts and removal.', bn: 'ভলিউম কন্টেইনারের বাইরে ডেটা রাখে, তাই রিস্টার্ট ও রিমুভের পরও টিকে থাকে।' },
+    }
+  },
   'binary-search': (step, lang) => {
     const arr = [1, 3, 5, 7, 9, 11, 13, 15]
     const states = [[0, 3, 7], [4, 5, 7], [6, 6, 7]]
@@ -642,7 +728,7 @@ const renderers = {
   },
 }
 
-const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6, 'net-stack': 4, 'net-handshake': 4, 'net-hops': 4, 'net-request': 2, 'net-address': 1, 'lx-prompt': 4, 'lx-tree': 3, 'lx-pipe': 4, 'lx-perms': 3, 'lx-process': 4 }
+const STEPS = { 'algo-flow': 4, array: 8, 'binary-search': 3, 'two-pointer': 3, 'sliding-window': 5, 'linked-list': 4, stack: 3, queue: 3, 'hash-table': 5, sorting: 9, greedy: 4, recursion: 4, 'binary-tree': 7, bst: 3, traversal: 7, heap: 3, backtracking: 2, trie: 6, graph: 5, bfs: 3, dfs: 5, 'weighted-graph': 5, complexity: 5, dp: 16, 'git-areas': 4, 'git-branch': 6, 'git-remote': 2, 'git-flow': 6, 'net-stack': 4, 'net-handshake': 4, 'net-hops': 4, 'net-request': 2, 'net-address': 1, 'lx-prompt': 4, 'lx-tree': 3, 'lx-pipe': 4, 'lx-perms': 3, 'lx-process': 4, 'dk-layers': 4, 'dk-lifecycle': 4, 'dk-build': 5, 'dk-registry': 2, 'dk-compose': 3, 'dk-volume': 2 }
 
 function DsaDiagram({ kind, lang, title }) {
   const renderer = renderers[kind] || renderers['algo-flow']
@@ -675,7 +761,7 @@ function DsaDiagram({ kind, lang, title }) {
 const SD_FLOW_KINDS = new Set(['request', 'loadbalancer', 'cdn', 'cache', 'database', 'queue', 'sharding', 'url', 'chat', 'feed', 'video'])
 
 export default function CourseDiagram({ kind, courseId, lang, title }) {
-  if (courseId === 'dsa' || courseId === 'git' || courseId === 'networking' || courseId === 'linux' || renderers[kind]) return <DsaDiagram kind={kind} lang={lang} title={title} />
+  if (courseId === 'dsa' || courseId === 'git' || courseId === 'networking' || courseId === 'linux' || courseId === 'docker' || renderers[kind]) return <DsaDiagram kind={kind} lang={lang} title={title} />
   if (SD_FLOW_KINDS.has(kind) || !kind) return <ArchitectureDiagram kind={kind} lang={lang} title={title} />
   return <ArchitectureDiagram kind={kind} lang={lang} title={title} />
 }

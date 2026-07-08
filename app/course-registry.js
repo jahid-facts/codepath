@@ -3,6 +3,7 @@ import { dsaModules, dsaTopics, dsaLabs } from './courses/dsa.js'
 import { gitModules, gitTopics, gitLabs } from './courses/git.js'
 import { netModules, netTopics, netLabs } from './courses/networking.js'
 import { linuxModules, linuxTopics, linuxLabs } from './courses/linux.js'
+import { dockerModules, dockerTopics, dockerLabs } from './courses/docker.js'
 import { networkingModule, networkingTopics } from './courses/system-design-networking.js'
 
 // Tag content with its owning course without mutating the source arrays
@@ -73,11 +74,14 @@ export const courses = [
     labs: linuxLabs,
   },
   {
-    id: 'docker', available: false,
+    id: 'docker', available: true,
     title: l('Docker', 'ডকার'),
     tagline: l('Docker', 'ডকার'),
     summary: l('Containers, images, volumes, and networking to package and ship applications.', 'অ্যাপ্লিকেশন প্যাকেজ ও শিপ করতে কন্টেইনার, ইমেজ, ভলিউম ও নেটওয়ার্কিং।'),
     mark: 'D', color: '#0284c7', accent: '#e3f2fd', icon: '▧',
+    modules: tag('docker', dockerModules),
+    topics: tag('docker', dockerTopics),
+    labs: dockerLabs,
   },
   {
     id: 'kubernetes', available: false,
