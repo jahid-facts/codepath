@@ -1,5 +1,6 @@
 import { l } from '../data.js'
 import { buildExam } from './exam-factory.js'
+import { linuxGuides } from '../guides/linux-guides.js'
 
 // Linux Fundamentals course — bilingual (English / Bangla).
 // Mirrors the DSA / Git / Networking course shape so lesson rendering stays data-driven.
@@ -250,6 +251,7 @@ export const linuxTopics = rawTopics.map((row, index) => {
   const [id, moduleId, en, bn, difficulty, minutes, diagram, insightEn, insightBn, analogyEn, analogyBn, actionEn, actionBn, tradeoffEn, tradeoffBn, mistakeEn, mistakeBn] = row
   const topic = {
     id, order: index + 1, moduleId, title: l(en, bn), difficulty, minutes, diagram, deepDive: null,
+    guide: linuxGuides[id] || null,
     insight: l(insightEn, insightBn), analogy: l(analogyEn, analogyBn), action: l(actionEn, actionBn), tradeoff: l(tradeoffEn, tradeoffBn), mistake: l(mistakeEn, mistakeBn),
     complexity: (commands[id] || []).map(([opEn, opBn, value]) => ({ op: l(opEn, opBn), value })),
     objectives: [

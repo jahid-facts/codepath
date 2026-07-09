@@ -535,6 +535,7 @@ function Lesson({ topicId, progress, setProgress, lang, openTopic, navigate }) {
         <LessonSection number="01" label={lang === 'bn' ? 'শেখার লক্ষ্য' : 'Learning objectives'}><ul className="check-list">{topic.objectives.map((item, i) => <li key={i}><Icon name="check" /> {text(item)}</li>)}</ul></LessonSection>
         <LessonSection number="02" label={lang === 'bn' ? 'সহজভাবে ভাবুন' : 'Start with an analogy'}><div className="analogy-card"><span>💡</span><p>{text(topic.analogy)}</p></div></LessonSection>
         <LessonSection number="03" label={lang === 'bn' ? 'মূল ধারণা' : 'Core idea'}><p className="lead-paragraph">{text(topic.insight)}</p><div className="principle-card"><strong>{lang === 'bn' ? 'মূল নীতি' : 'Design principle'}</strong><p>{text(topic.action)}</p></div></LessonSection>
+        {topic.guide && <LessonGuide guide={topic.guide} lang={lang} />}
         <LessonSection number="04" label={course.id === 'system-design' ? (lang === 'bn' ? 'ভিজ্যুয়াল ফ্লো' : 'Visual request flow') : (lang === 'bn' ? 'ভিজ্যুয়াল ব্যাখ্যা' : 'Visual walkthrough')}><CourseDiagram kind={topic.diagram} courseId={course.id} lang={lang} title={topic.title} /></LessonSection>
         <LessonSection number="05" label={course.id === 'system-design' ? (lang === 'bn' ? 'অনুরোধের পথ' : 'Walk through the flow') : (lang === 'bn' ? 'ধাপে ধাপে' : 'Step by step')}><ol className="flow-steps"><li><b>1</b><span>{text(topic.insight)}</span></li><li><b>2</b><span>{text(topic.action)}</span></li><li><b>3</b><span>{course.id === 'system-design' ? (lang === 'bn' ? 'সিস্টেম ফল দেয় এবং লেটেন্সি, এরর ও ক্ষমতা পরিমাপ করে।' : 'The system returns a result and measures latency, errors, and capacity.') : (lang === 'bn' ? 'খরচ ও ট্রেড-অফ যাচাই করে সেরা বিকল্পটি বাছুন।' : 'Weigh the cost and trade-off, then choose the best alternative.')}</span></li></ol></LessonSection>
         {topic.complexity?.length > 0 && <LessonSection number="•" label={course.id === 'git' || course.id === 'linux' || course.id === 'docker' || course.id === 'kubernetes' ? (lang === 'bn' ? 'জরুরি কমান্ড' : 'Key commands') : course.id === 'networking' ? (lang === 'bn' ? 'দ্রুত রেফারেন্স' : 'Quick reference') : (lang === 'bn' ? 'জটিলতা' : 'Complexity')}><ComplexityTable rows={topic.complexity} lang={lang} courseId={course.id} /></LessonSection>}
@@ -565,6 +566,42 @@ function ComplexityTable({ rows, lang, courseId }) {
       ? (lang === 'bn' ? ['বিষয়', 'মান'] : ['Item', 'Value'])
       : (lang === 'bn' ? ['অপারেশন', 'জটিলতা'] : ['Operation', 'Complexity'])
   return <div className="complexity-table"><div className="complexity-head"><span>{head[0]}</span><span>{head[1]}</span></div>{rows.map((row, index) => <div className="complexity-row" key={index}><span>{t(row.op, lang)}</span><code>{row.value}</code></div>)}</div>
+}
+
+function GuideBlock({ block, lang }) {
+  const text = (v) => t(v, lang)
+  const border = '1px solid rgba(128,128,128,.22)'
+  if (block.p) return <p style={{ margin: '0 0 12px', lineHeight: 1.78 }}>{text(block.p)}</p>
+  if (block.list) return <ul style={{ margin: '0 0 14px', paddingLeft: '20px', lineHeight: 1.7 }}>{block.list.map((item, i) => <li key={i} style={{ margin: '7px 0' }}>{text(item)}</li>)}</ul>
+  if (block.steps) return <ol className="guide-steps" style={{ margin: '0 0 14px', paddingLeft: '24px', lineHeight: 1.7 }}>{block.steps.map((item, i) => <li key={i} style={{ margin: '9px 0', paddingLeft: '4px' }}>{text(item)}</li>)}</ol>
+  if (block.note) {
+    const warn = block.kind === 'warn'
+    return <aside style={{ margin: '0 0 14px', padding: '12px 15px', borderRadius: '10px', borderLeft: `3px solid ${warn ? '#dc4a4a' : 'var(--accent, #6757df)'}`, background: warn ? 'rgba(220,74,74,.09)' : 'rgba(103,87,223,.09)' }}>
+      <span style={{ fontWeight: 700, fontSize: '.72rem', textTransform: 'uppercase', letterSpacing: '.06em', opacity: 0.75 }}>{warn ? (lang === 'bn' ? '⚠ খেয়াল রাখুন' : '⚠ Watch out') : (lang === 'bn' ? '💡 টিপ' : '💡 Tip')}</span>
+      <p style={{ margin: '5px 0 0', lineHeight: 1.7 }}>{text(block.note)}</p>
+    </aside>
+  }
+  if (block.code) return <div style={{ margin: '0 0 14px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #23292f' }}>
+    <pre style={{ margin: 0, background: '#0d1117', color: '#cdd6e3', fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace', fontSize: '.82rem', lineHeight: 1.7, padding: '14px 16px', overflowX: 'auto', tabSize: 2 }}><code>{block.code}</code></pre>
+    {block.caption && <p style={{ margin: 0, padding: '10px 14px', background: '#12161c', color: '#9aa4b2', fontSize: '.84rem', lineHeight: 1.6 }}>{text(block.caption)}</p>}
+  </div>
+  if (block.table) return <div style={{ overflowX: 'auto', margin: '0 0 16px' }}><table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '.9rem' }}>
+    <thead><tr>{block.table.head.map((h, i) => <th key={i} style={{ textAlign: 'left', padding: '9px 13px', borderBottom: '2px solid rgba(128,128,128,.35)', fontWeight: 700 }}>{text(h)}</th>)}</tr></thead>
+    <tbody>{block.table.rows.map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={ci} style={{ padding: '9px 13px', borderBottom: border, verticalAlign: 'top', lineHeight: 1.6 }}>{text(cell)}</td>)}</tr>)}</tbody>
+  </table></div>
+  return null
+}
+
+function LessonGuide({ guide, lang }) {
+  const text = (v) => t(v, lang)
+  return <LessonSection number="◆" label={lang === 'bn' ? 'গভীর ব্যাখ্যা' : 'In depth'}>
+    <div className="lesson-guide" style={{ maxWidth: '72ch' }}>
+      {guide.map((section, si) => <div key={si} style={{ marginBottom: '28px' }}>
+        <h3 style={{ margin: '0 0 12px', fontSize: '1.14rem', lineHeight: 1.3 }}>{text(section.h)}</h3>
+        {section.blocks.map((block, bi) => <GuideBlock key={bi} block={block} lang={lang} />)}
+      </div>)}
+    </div>
+  </LessonSection>
 }
 
 function LessonExample({ example, lang }) {

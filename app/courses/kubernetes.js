@@ -1,5 +1,6 @@
 import { l } from '../data.js'
 import { buildExam } from './exam-factory.js'
+import { k8sGuides } from '../guides/kubernetes-guides.js'
 
 // Kubernetes course — bilingual (English / Bangla), deep build:
 // 8 modules, 38 topics, kubectl reference tables, hands-on YAML examples, and guided labs.
@@ -317,6 +318,7 @@ export const k8sTopics = rawTopics.map((row, index) => {
     insight: l(insightEn, insightBn), analogy: l(analogyEn, analogyBn), action: l(actionEn, actionBn), tradeoff: l(tradeoffEn, tradeoffBn), mistake: l(mistakeEn, mistakeBn),
     complexity: (commands[id] || []).map(([opEn, opBn, value]) => ({ op: l(opEn, opBn), value })),
     example: examples[id] || null,
+    guide: k8sGuides[id] || null,
     objectives: [
       l(`Explain ${en} in plain language.`, `সহজ ভাষায় ${bn} ব্যাখ্যা করতে পারবেন।`),
       l('Recognize when to reach for this in a real cluster.', 'বাস্তব ক্লাস্টারে কখন এটি নিতে হবে তা বুঝতে পারবেন।'),

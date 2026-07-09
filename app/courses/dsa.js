@@ -1,5 +1,6 @@
 import { l } from '../data.js'
 import { buildExam } from './exam-factory.js'
+import { dsaGuides } from '../guides/dsa-guides.js'
 
 // Data Structures & Algorithms course — bilingual (English / Bangla).
 // Topic rows mirror the System Design course shape so lesson rendering stays data-driven.
@@ -255,6 +256,7 @@ export const dsaTopics = rawTopics.map((row, index) => {
   const [id, moduleId, en, bn, difficulty, minutes, diagram, insightEn, insightBn, analogyEn, analogyBn, actionEn, actionBn, tradeoffEn, tradeoffBn, mistakeEn, mistakeBn] = row
   const topic = {
     id, order: index + 1, moduleId, title: l(en, bn), difficulty, minutes, diagram, deepDive: null,
+    guide: dsaGuides[id] || null,
     insight: l(insightEn, insightBn), analogy: l(analogyEn, analogyBn), action: l(actionEn, actionBn), tradeoff: l(tradeoffEn, tradeoffBn), mistake: l(mistakeEn, mistakeBn),
     complexity: (complexity[id] || []).map(([opEn, opBn, value]) => ({ op: l(opEn, opBn), value })),
     objectives: [

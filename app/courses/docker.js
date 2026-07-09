@@ -1,5 +1,6 @@
 import { l } from '../data.js'
 import { buildExam } from './exam-factory.js'
+import { dockerGuides } from '../guides/docker-guides.js'
 
 // Docker course — bilingual (English / Bangla), deeper build:
 // 8 modules, 38 topics, command tables, hands-on code examples, and guided labs.
@@ -313,6 +314,7 @@ export const dockerTopics = rawTopics.map((row, index) => {
     insight: l(insightEn, insightBn), analogy: l(analogyEn, analogyBn), action: l(actionEn, actionBn), tradeoff: l(tradeoffEn, tradeoffBn), mistake: l(mistakeEn, mistakeBn),
     complexity: (commands[id] || []).map(([opEn, opBn, value]) => ({ op: l(opEn, opBn), value })),
     example: examples[id] || null,
+    guide: dockerGuides[id] || null,
     objectives: [
       l(`Explain ${en} in plain language.`, `সহজ ভাষায় ${bn} ব্যাখ্যা করতে পারবেন।`),
       l('Recognize when to reach for this in a real Docker workflow.', 'বাস্তব ডকার ওয়ার্কফ্লোতে কখন এটি নিতে হবে তা বুঝতে পারবেন।'),

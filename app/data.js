@@ -1,6 +1,8 @@
 import { allFlagshipContent } from './flagship-content.js'
 import { flagshipExams } from './flagship-exams.js'
 import { buildExam } from './courses/exam-factory.js'
+import { guides } from './course-guides.js'
+import { sdGuides } from './guides/system-design-guides.js'
 
 export const l = (en, bn) => ({ en, bn })
 
@@ -275,6 +277,7 @@ export const topics = rawTopics.map((row, index) => {
   const [id, moduleId, en, bn, difficulty, minutes, diagram, insightEn, insightBn, analogyEn, analogyBn, actionEn, actionBn, tradeoffEn, tradeoffBn, mistakeEn, mistakeBn] = row
   const topic = {
     id, order: index + 1, moduleId, title: l(en, bn), difficulty, minutes, diagram, deepDive: allFlagshipContent[id] || null,
+    guide: guides[id] || sdGuides[id] || null,
     insight: l(insightEn, insightBn), analogy: l(analogyEn, analogyBn), action: l(actionEn, actionBn), tradeoff: l(tradeoffEn, tradeoffBn), mistake: l(mistakeEn, mistakeBn),
     objectives: [
       l(`Explain ${en} in plain language.`, `সহজ ভাষায় ${bn} ব্যাখ্যা করতে পারবেন।`),
