@@ -633,4 +633,8 @@ table { max-width: 100%; }
   /* WCAG 2.5.5 target size on the controls that stay in the bar. */
   .top-nav .language-toggle { min-height: 44px; align-items: center; }
   .top-nav .avatar { width: 40px; height: 40px; }
+  /* The label and shortcut hint are hidden at this width, so collapse the
+     control to a square icon button instead of a wide empty box. */
+  .top-nav .search-trigger { min-width: 44px; width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .top-nav .search-trigger > span { font-size: 19px; }
 }

@@ -30,3 +30,4 @@ backups/
 *.njsproj
 *.sln
 *.sw?
+*.zip
