@@ -77,6 +77,7 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
   const [view, setView] = useState(initialView)
   const [searchOpen, setSearchOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const stored = loadProgress()
@@ -138,6 +139,8 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
   const completedCount = course.topics.filter((topic) => progress.completed.includes(topic.id)).length
   const needsOnboarding = ready && activeCourseId === DEFAULT_COURSE_ID && !progress.onboarding.completed && (progress.onboarding.retake || (progress.completed.length === 0 && Object.values(progress.attempts).flat().length === 0))
 
+  useEffect(() => { setMenuOpen(false) }, [view.name, view.topicId])
+
   const withSidebar = SIDEBAR_VIEWS.includes(view.name)
   return (
     <CourseContext.Provider value={courseValue}>
@@ -159,6 +162,8 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
         onSearch={() => setSearchOpen(true)}
         onProfile={() => setProfileOpen(true)}
         onToggleLang={() => update({ language: lang === 'en' ? 'bn' : 'en' })}
+        onMenu={() => setMenuOpen(true)}
+        menuOpen={menuOpen}
       />
 
       <div className="docs-body">
@@ -192,10 +197,24 @@ export default function LearningApp({ initialView = { name: 'dashboard' } }) {
         <NavButton active={['tools', 'simulator', 'labs'].includes(view.name)} icon="simulator" label={lang === 'bn' ? 'টুলস' : 'Tools'} onClick={() => navigate('tools')} />
         <NavButton active={view.name === 'interview'} icon="interview" label={lang === 'bn' ? 'ইন্টারভিউ' : 'Interview'} onClick={() => navigate('interview')} />
       </nav>
+      {menuOpen && (
+        <MobileMenu
+          view={view}
+          lang={lang}
+          course={course}
+          courses={courses}
+          switchCourse={switchCourse}
+          navigate={navigate}
+          progress={progress}
+          openTopic={openTopic}
+          completedCount={completedCount}
+          onClose={() => setMenuOpen(false)}
+        />
+      )}
       {searchOpen && <SearchPalette lang={lang} progress={progress} onClose={() => setSearchOpen(false)} openTopic={(id) => { setSearchOpen(false); openTopic(id) }} />}
       {profileOpen && <ProfilePanel progress={progress} setProgress={setProgress} lang={lang} onClose={() => setProfileOpen(false)} />}
       {needsOnboarding && <Onboarding lang={lang} onFinish={(onboarding, startTopic) => { setProgress((current) => ({ ...current, onboarding: { ...onboarding, completed: true, retake: false } })); if (startTopic) openTopic(onboarding.recommendedTopic) }} />}
-      {(searchOpen || profileOpen || needsOnboarding) && <DialogFocusManager selector={needsOnboarding ? '.onboarding' : profileOpen ? '.profile-panel' : '.search-palette'} />}
+      {(searchOpen || profileOpen || needsOnboarding || menuOpen) && <DialogFocusManager selector={needsOnboarding ? '.onboarding' : menuOpen ? '.mobile-drawer' : profileOpen ? '.profile-panel' : '.search-palette'} />}
       {ready && progress.analyticsConsent === 'unset' && !needsOnboarding && <AnalyticsConsent lang={lang} onAccept={() => setProgress((current) => ({ ...current, analyticsConsent: 'granted', analyticsOptOut: false }))} onDecline={() => setProgress((current) => ({ ...current, analyticsConsent: 'denied', analyticsOptOut: true }))} />}
       <FocusTimer lang={lang} />
     </div>
@@ -207,10 +226,21 @@ function NavButton({ active, icon, label, onClick, badge }) {
   return <button className={`nav-button ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onClick}><Icon name={icon} /><span>{label}</span>{badge && <small>{badge}</small>}</button>
 }
 
-function TopNav({ view, lang, course, courses, switchCourse, navigate, onSearch, onProfile, onToggleLang }) {
+function TopNav({ view, lang, course, courses, switchCourse, navigate, onSearch, onProfile, onToggleLang, onMenu, menuOpen }) {
   const text = (v) => t(v, lang)
   return (
     <header className="top-nav">
+      {/* Compact-viewport entry point to the full navigation drawer. Hidden by CSS
+          above the tablet breakpoint, where the inline links are shown instead. */}
+      <button
+        className="nav-menu-button"
+        onClick={onMenu}
+        aria-label={lang === 'bn' ? 'মেনু খুলুন' : 'Open menu'}
+        aria-expanded={menuOpen}
+        aria-controls="mobile-drawer"
+      >
+        <span aria-hidden="true"><i /><i /><i /></span>
+      </button>
       <button className="app-wordmark" onClick={() => navigate('dashboard')} aria-label={siteName}>{siteName}</button>
       <CourseSwitcher course={course} courses={courses} lang={lang} switchCourse={switchCourse} navigate={navigate} />
       <nav className="top-nav-links" aria-label="Primary navigation">
@@ -231,6 +261,94 @@ function TopNav({ view, lang, course, courses, switchCourse, navigate, onSearch,
         <button className="avatar" onClick={onProfile} aria-label="Local learner profile">LP</button>
       </div>
     </header>
+  )
+}
+
+// Full navigation for compact viewports. Below the tablet breakpoint the inline
+// top-nav links and the docs sidebar are both hidden, so this drawer is the only
+// place the section list and the curriculum tree remain reachable.
+function MobileMenu({ view, lang, course, courses, switchCourse, navigate, progress, openTopic, completedCount, onClose }) {
+  const text = (v) => t(v, lang)
+  const withSidebar = SIDEBAR_VIEWS.includes(view.name)
+
+  // Close on Escape and lock background scrolling while the drawer is open.
+  useEffect(() => {
+    const onKey = (event) => { if (event.key === 'Escape') onClose() }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [onClose])
+
+  const go = (name, data) => { onClose(); navigate(name, data) }
+
+  return (
+    <div className="mobile-drawer-backdrop" onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <div className="mobile-drawer" id="mobile-drawer" role="dialog" aria-modal="true" aria-label={lang === 'bn' ? 'নেভিগেশন' : 'Navigation'}>
+        <header className="mobile-drawer-head">
+          <button className="app-wordmark" onClick={() => go('dashboard')}>{siteName}</button>
+          <button className="mobile-drawer-close" onClick={onClose} aria-label={lang === 'bn' ? 'মেনু বন্ধ করুন' : 'Close menu'}>✕</button>
+        </header>
+
+        <div className="mobile-drawer-body">
+          <p className="mobile-drawer-label">{lang === 'bn' ? 'কোর্স' : 'Courses'}</p>
+          <div className="mobile-drawer-courses">
+            {courses.map((item) => (
+              <button
+                key={item.id}
+                disabled={!item.available}
+                className={`mobile-drawer-course ${item.id === course.id ? 'active' : ''} ${item.available ? '' : 'soon'}`}
+                onClick={() => { if (item.available) { onClose(); switchCourse(item.id) } }}
+              >
+                <span className="course-menu-mark" style={{ background: item.accent, color: item.color }}>{item.mark}</span>
+                <span className="course-menu-copy">
+                  <strong>{text(item.title)}</strong>
+                  <small>{item.available ? text(item.tagline) : (lang === 'bn' ? 'শীঘ্রই আসছে' : 'Coming soon')}</small>
+                </span>
+                {item.id === course.id && item.available && <b aria-hidden="true">✓</b>}
+              </button>
+            ))}
+          </div>
+
+          <p className="mobile-drawer-label">{lang === 'bn' ? 'বিভাগ' : 'Sections'}</p>
+          <nav className="mobile-drawer-links" aria-label={lang === 'bn' ? 'প্রধান নেভিগেশন' : 'Primary navigation'}>
+            <button className={`mobile-drawer-link ${view.name === 'dashboard' ? 'active' : ''}`} onClick={() => go('dashboard')}>
+              <Icon name="home" /><span>{lang === 'bn' ? 'হোম' : 'Home'}</span>
+            </button>
+            {sectionsForCourse(course).map((section) => (
+              <button
+                key={section.id}
+                className={`mobile-drawer-link ${section.match.includes(view.name) ? 'active' : ''}`}
+                aria-current={section.match.includes(view.name) ? 'page' : undefined}
+                onClick={() => go(section.id)}
+              >
+                <Icon name={section.icon} /><span>{text(section.label)}</span>
+              </button>
+            ))}
+            <button className={`mobile-drawer-link ${view.name === 'catalog' ? 'active' : ''}`} onClick={() => go('catalog')}>
+              <Icon name="book" /><span>{lang === 'bn' ? 'সব কোর্স' : 'All courses'}</span>
+            </button>
+          </nav>
+
+          {withSidebar && (
+            <>
+              <p className="mobile-drawer-label">{lang === 'bn' ? 'পাঠ্যক্রম' : 'Curriculum'}</p>
+              <DocsSidebar
+                view={view}
+                progress={progress}
+                lang={lang}
+                openTopic={(id) => { onClose(); openTopic(id) }}
+                navigate={go}
+                completedCount={completedCount}
+              />
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
